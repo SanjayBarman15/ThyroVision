@@ -23,11 +23,11 @@ env/
 # =====================
 # Models / Training
 # =====================
-training/dataset/
-training/__pycache__/
-models/*.h5         # trained models (optional: can ignore or include based on choice)
-*.h5
-*.hdf5
+# training/dataset/
+# training/__pycache__/
+# models/*.h5         # trained models (optional: can ignore or include based on choice)
+# *.h5
+# *.hdf5
 
 # =====================
 # Frontend (Next.js / Node)
