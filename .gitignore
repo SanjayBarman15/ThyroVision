@@ -1,0 +1,63 @@
+# =====================
+# System / OS files
+# =====================
+.DS_Store
+Thumbs.db
+*.log
+
+# =====================
+# Python / Backend
+# =====================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.db
+.env                # backend environment file
+*.egg-info/
+.venv/
+venv/
+env/
+
+# =====================
+# Models / Training
+# =====================
+training/dataset/
+training/__pycache__/
+models/*.h5         # trained models (optional: can ignore or include based on choice)
+*.h5
+*.hdf5
+
+# =====================
+# Frontend (Next.js / Node)
+# =====================
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.production.local
+frontend/.env.test.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+.env*
+
+# =====================
+# IDE / Editor
+# =====================
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# =====================
+# Deployment / Docker
+# =====================
+*.dockerignore
+*.env.*.local
+*env*
+docker-compose.override.yml
+docker-compose.dev.yml
+docker-compose.test.yml
