@@ -96,7 +96,7 @@ project/
 - Feedback submission (correct / incorrect prediction)
 
 ### 3.3 Communication
-- Secure **REST APIs (HTTPS)**  
+- Secure **FAST APIs (HTTPS)**  
 - Real-time inference response rendering  
 
 ---
