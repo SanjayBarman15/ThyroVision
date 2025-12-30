@@ -1,5 +1,5 @@
 # Thyroid Ultrasound AI System  
-**End-to-End Architecture & Deployment Guide**
+**End-to-End Architecture & Deployment**
 
 ---
 
