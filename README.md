@@ -135,35 +135,54 @@ backend/
 
 ## 5. Docker Architecture
 
-### 5.1 Why Docker?
-- Reproducible environments  
-- Dependency consistency  
-- Scalable deployment  
-- CI/CD friendly  
+### 5.1 Purpose of Docker
 
-### 5.2 Dockerfile
+Docker is used to containerize the FastAPI backend and machine learning inference pipeline to ensure:
+
+- Reproducible and isolated runtime environments  
+- Consistent dependency management (PyTorch, OpenCV, Grad-CAM)  
+- Reliable deployment across development and production  
+- Simplified CI/CD and model version rollbacks  
+
+The Docker container packages the API logic, ML model weights, and explainability components into a single deployable unit.
+
+---
+
+### 5.2 Backend Dockerfile (FastAPI)
 
 ```dockerfile
 FROM python:3.10-slim
 
+# Ensure real-time logging
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
+# System dependencies required for image processing
 RUN apt-get update && apt-get install -y \
     libgl1 \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy FastAPI application and ML models
 COPY app ./app
 COPY main.py .
 COPY models ./models
 
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Single worker is recommended for ML inference workloads
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
 ```
+### 5.3 Design Considerations
+- The ML model and inference pipeline are baked into the Docker image to ensure reproducibility and eliminate runtime downloads.
 
+- A single Uvicorn worker is used to prevent model memory duplication and thread-safety issues during inference.
+
+- The container is optimized for CPU-based inference, suitable for deployment on managed platforms such as Render.
 ---
 
 ## 6. Machine Learning Architecture
