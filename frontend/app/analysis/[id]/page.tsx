@@ -54,7 +54,7 @@ export default function AnalysisPage({ params }: { params: { id: string } }) {
       <main className="flex-1 overflow-hidden relative">
         <SplitPane>
           {/* LEFT PANEL - Scrollable Info */}
-          <div className="h-full overflow-y-auto p-4 space-y-4 pb-20 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+          <div className="h-full overflow-y-auto p-4 space-y-4 pb-20 custom-scrollbar">
             <PatientInfoCard patient={patient} />
             <PredictionCard analysis={analysis} />
             <ExplanationAccordion analysis={analysis} />

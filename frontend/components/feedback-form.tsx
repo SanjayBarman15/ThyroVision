@@ -44,7 +44,7 @@ export default function FeedbackForm({
   if (submitted) {
     return (
       <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-md p-4 flex items-center gap-3">
-        <CheckCircle2 className="h-5 w-5 text-emerald-500 flex-shrink-0" />
+        <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />
         <div>
           <p className="text-sm font-medium text-emerald-400">
             Feedback recorded

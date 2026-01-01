@@ -111,7 +111,7 @@ export default function ImageViewer({
               }`}
             >
               {/* Simulated Image Content */}
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-black opacity-50" />
+              <div className="absolute inset-0 bg-linear-to-br from-slate-800 to-black opacity-50" />
               <div className="text-center z-10 opacity-40 select-none pointer-events-none">
                 <div className="text-6xl mb-4 grayscale filter drop-shadow-lg">
                   {imageMode === "original" ? "📷" : "🔮"}
