@@ -13,6 +13,7 @@ import NewScanPanel from "@/components/new-scan-panel";
 import StatsStrip from "@/components/dashboard/stats-strip";
 import PatientCard from "@/components/dashboard/patient-card";
 import EmptyState from "@/components/dashboard/empty-state";
+import { signout } from "@/app/login/actions";
 
 type PatientStatus = "new" | "reviewed" | "high-risk" | "feedback-pending";
 
@@ -121,14 +122,17 @@ export default function DashboardPage() {
               </p>
             </div>
             <div className="h-8 w-px bg-border hidden sm:block" />
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
+            <form action={signout}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-foreground"
+                type="submit"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </form>
           </div>
         </div>
       </header>

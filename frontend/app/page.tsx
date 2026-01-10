@@ -1,9 +1,17 @@
-import LandingHeader from "@/components/landing-header"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { CheckCircle2, Brain, BarChart3, MessageSquare, Download, Lock, ArrowRight } from "lucide-react"
-import Link from "next/link"
+import LandingHeader from "@/components/landing-header";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  CheckCircle2,
+  Brain,
+  BarChart3,
+  MessageSquare,
+  Download,
+  Lock,
+  ArrowRight,
+} from "lucide-react";
+import Link from "next/link";
 
 export default function LandingPage() {
   return (
@@ -22,12 +30,16 @@ export default function LandingPage() {
             AI-Assisted Thyroid Ultrasound Analysis
           </h1>
           <p className="mb-8 text-xl text-muted-foreground">
-            ThyroVision provides radiologists with AI-powered classification and localization assistance, keeping the
-            doctor in control of every clinical decision.
+            ThyroVision provides radiologists with AI-powered classification and
+            localization assistance, keeping the doctor in control of every
+            clinical decision.
           </p>
           <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
-            <Link href="/dashboard">
-              <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto">
+            <Link href="/signup">
+              <Button
+                size="lg"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto"
+              >
                 Get Started
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
@@ -46,7 +58,9 @@ export default function LandingPage() {
             <div className="aspect-video rounded-md bg-gradient-to-br from-card to-background flex items-center justify-center">
               <div className="text-center">
                 <Brain className="mx-auto mb-4 h-16 w-16 text-secondary opacity-50" />
-                <p className="text-muted-foreground">Product Interface Preview</p>
+                <p className="text-muted-foreground">
+                  Product Interface Preview
+                </p>
               </div>
             </div>
           </div>
@@ -56,47 +70,70 @@ export default function LandingPage() {
       {/* Problem → Solution */}
       <section className="border-t border-border px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl">
-          <h2 className="mb-12 text-center text-3xl font-bold">Why ThyroVision?</h2>
+          <h2 className="mb-12 text-center text-3xl font-bold">
+            Why ThyroVision?
+          </h2>
           <div className="grid gap-12 md:grid-cols-2">
             <div>
-              <h3 className="mb-4 text-lg font-semibold text-muted-foreground">Clinical Challenges</h3>
+              <h3 className="mb-4 text-lg font-semibold text-muted-foreground">
+                Clinical Challenges
+              </h3>
               <ul className="space-y-3">
                 <li className="flex gap-3">
                   <span className="text-secondary">•</span>
-                  <span>High inter-observer variability in TIRADS assessment</span>
+                  <span>
+                    High inter-observer variability in TIRADS assessment
+                  </span>
                 </li>
                 <li className="flex gap-3">
                   <span className="text-secondary">•</span>
-                  <span>Time-consuming manual analysis of nodule characteristics</span>
+                  <span>
+                    Time-consuming manual analysis of nodule characteristics
+                  </span>
                 </li>
                 <li className="flex gap-3">
                   <span className="text-secondary">•</span>
-                  <span>Need for consistent documentation and follow-up recommendations</span>
+                  <span>
+                    Need for consistent documentation and follow-up
+                    recommendations
+                  </span>
                 </li>
                 <li className="flex gap-3">
                   <span className="text-secondary">•</span>
-                  <span>Difficulty maintaining diagnostic accuracy under high volume</span>
+                  <span>
+                    Difficulty maintaining diagnostic accuracy under high volume
+                  </span>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="mb-4 text-lg font-semibold text-primary">ThyroVision Solutions</h3>
+              <h3 className="mb-4 text-lg font-semibold text-primary">
+                ThyroVision Solutions
+              </h3>
               <ul className="space-y-3">
                 <li className="flex gap-3">
                   <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                  <span>AI-assisted TIRADS classification with confidence scores</span>
+                  <span>
+                    AI-assisted TIRADS classification with confidence scores
+                  </span>
                 </li>
                 <li className="flex gap-3">
                   <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                  <span>Automated nodule localization and characterization</span>
+                  <span>
+                    Automated nodule localization and characterization
+                  </span>
                 </li>
                 <li className="flex gap-3">
                   <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                  <span>Explainable AI that doctors can understand and verify</span>
+                  <span>
+                    Explainable AI that doctors can understand and verify
+                  </span>
                 </li>
                 <li className="flex gap-3">
                   <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                  <span>Human-in-the-loop feedback system for continuous improvement</span>
+                  <span>
+                    Human-in-the-loop feedback system for continuous improvement
+                  </span>
                 </li>
               </ul>
             </div>
@@ -112,10 +149,21 @@ export default function LandingPage() {
             {[
               { step: "1", title: "Upload", desc: "Upload ultrasound images" },
               { step: "2", title: "Analyze", desc: "AI processes the images" },
-              { step: "3", title: "Review", desc: "Review AI predictions and explanation" },
-              { step: "4", title: "Confirm", desc: "Provide feedback and export report" },
+              {
+                step: "3",
+                title: "Review",
+                desc: "Review AI predictions and explanation",
+              },
+              {
+                step: "4",
+                title: "Confirm",
+                desc: "Provide feedback and export report",
+              },
             ].map((item) => (
-              <div key={item.step} className="flex flex-col items-center text-center">
+              <div
+                key={item.step}
+                className="flex flex-col items-center text-center"
+              >
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold">
                   {item.step}
                 </div>
@@ -164,14 +212,16 @@ export default function LandingPage() {
                 desc: "Understand why the AI made each prediction",
               },
             ].map((feature) => {
-              const Icon = feature.icon
+              const Icon = feature.icon;
               return (
                 <Card key={feature.title} className="border-border bg-card p-6">
                   <Icon className="mb-4 h-6 w-6 text-primary" />
                   <h3 className="mb-2 font-semibold">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground">{feature.desc}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {feature.desc}
+                  </p>
                 </Card>
-              )
+              );
             })}
           </div>
         </div>
@@ -182,15 +232,19 @@ export default function LandingPage() {
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="mb-8 text-3xl font-bold">Medical-Grade Standards</h2>
           <div className="space-y-4 rounded-lg border border-border bg-card/50 p-8">
-            <p className="text-lg font-semibold text-primary">AI-Assisted, Not AI-Replacing</p>
+            <p className="text-lg font-semibold text-primary">
+              AI-Assisted, Not AI-Replacing
+            </p>
             <p className="text-muted-foreground">
-              ThyroVision is designed as a clinical decision support tool. The radiologist retains full authority and
-              responsibility for all clinical decisions. Our AI provides evidence-based recommendations, but doctors
-              make the final call.
+              ThyroVision is designed as a clinical decision support tool. The
+              radiologist retains full authority and responsibility for all
+              clinical decisions. Our AI provides evidence-based
+              recommendations, but doctors make the final call.
             </p>
             <p className="text-sm text-muted-foreground pt-4">
-              ⚠️ Medical Disclaimer: ThyroVision is a research tool for clinical support purposes only and should not be
-              used as a substitute for professional medical judgment.
+              ⚠️ Medical Disclaimer: ThyroVision is a research tool for clinical
+              support purposes only and should not be used as a substitute for
+              professional medical judgment.
             </p>
           </div>
         </div>
@@ -201,7 +255,9 @@ export default function LandingPage() {
         <div className="mx-auto max-w-4xl flex flex-col items-center justify-between gap-6 md:flex-row">
           <div>
             <h3 className="font-semibold text-foreground">ThyroVision</h3>
-            <p className="text-sm text-muted-foreground">AI-Assisted Thyroid Analysis Platform</p>
+            <p className="text-sm text-muted-foreground">
+              AI-Assisted Thyroid Analysis Platform
+            </p>
           </div>
           <div className="text-center text-sm text-muted-foreground md:text-right">
             <p>Research & Academic Use</p>
@@ -218,5 +274,5 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
-  )
+  );
 }

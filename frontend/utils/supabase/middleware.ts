@@ -15,7 +15,10 @@ export async function updateSession(request: NextRequest) {
     console.error(
       "Missing Supabase credentials. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your .env.local file."
     );
-    return response;
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.searchParams.set("error", "missing_env_vars");
+    return NextResponse.redirect(url);
   }
 
   const supabase = createServerClient(
@@ -52,7 +55,6 @@ export async function updateSession(request: NextRequest) {
     !user &&
     !request.nextUrl.pathname.startsWith("/login") &&
     !request.nextUrl.pathname.startsWith("/signup") &&
-    !request.nextUrl.pathname.startsWith("/auth") &&
     request.nextUrl.pathname !== "/" // Assuming root is public or landing
   ) {
     // If you want root to be protected or redirect to login, adjust here.
@@ -75,7 +77,8 @@ export async function updateSession(request: NextRequest) {
   if (user) {
     if (
       request.nextUrl.pathname.startsWith("/login") ||
-      request.nextUrl.pathname.startsWith("/signup")
+      request.nextUrl.pathname.startsWith("/signup") ||
+      request.nextUrl.pathname === "/"
     ) {
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";
