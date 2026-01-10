@@ -1,10 +1,9 @@
 "use client";
 
 import type React from "react";
-
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { ZoomIn, ZoomOut, RotateCcw, Eye, EyeOff } from "lucide-react";
+import { ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 
 interface ImageViewerProps {
   zoomLevel: number;
@@ -24,33 +23,85 @@ export default function ImageViewer({
   onModeChange,
 }: ImageViewerProps) {
   const [isLoading, setIsLoading] = useState(true);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [offsetX, setOffsetX] = useState(0);
-  const [offsetY, setOffsetY] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Transform State
+  const [position, setPosition] = useState({ x: 0, y: 0 });
   const isDragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0 });
+  const lastPosition = useRef({ x: 0, y: 0 });
 
+  // Simulate loading
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 800);
     return () => clearTimeout(timer);
   }, []);
 
+  // Update position constraints when zoom changes
+  useEffect(() => {
+    if (zoomLevel <= 1) {
+      // Reset position when zoomed out
+      setPosition({ x: 0, y: 0 });
+      lastPosition.current = { x: 0, y: 0 };
+    } else {
+      // Clamp current position to new constraints if needed
+      // This prevents "losing" the image if you zoom out while panned far away
+      if (containerRef.current) {
+        const { width, height } = containerRef.current.getBoundingClientRect();
+        const maxX = (width * (zoomLevel - 1)) / 2;
+        const maxY = (height * (zoomLevel - 1)) / 2;
+
+        const clampedX = Math.max(-maxX, Math.min(position.x, maxX));
+        const clampedY = Math.max(-maxY, Math.min(position.y, maxY));
+
+        if (clampedX !== position.x || clampedY !== position.y) {
+          setPosition({ x: clampedX, y: clampedY });
+          lastPosition.current = { x: clampedX, y: clampedY };
+        }
+      }
+    }
+  }, [zoomLevel]);
+
   const handleMouseDown = (e: React.MouseEvent) => {
+    // Only allow drag if zoomed in
+    if (zoomLevel <= 1) return;
+
+    e.preventDefault();
     isDragging.current = true;
-    dragStart.current = { x: e.clientX - offsetX, y: e.clientY - offsetY };
+    dragStart.current = { x: e.clientX, y: e.clientY };
+    lastPosition.current = { ...position };
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging.current) return;
-    setOffsetX(e.clientX - dragStart.current.x);
-    setOffsetY(e.clientY - dragStart.current.y);
+    if (!isDragging.current || !containerRef.current) return;
+
+    const deltaX = e.clientX - dragStart.current.x;
+    const deltaY = e.clientY - dragStart.current.y;
+
+    // Calculate constraints
+    const { width, height } = containerRef.current.getBoundingClientRect();
+    const maxOffset_X = (width * (zoomLevel - 1)) / 2;
+    const maxOffset_Y = (height * (zoomLevel - 1)) / 2;
+
+    const newX = Math.max(
+      -maxOffset_X,
+      Math.min(lastPosition.current.x + deltaX, maxOffset_X)
+    );
+    const newY = Math.max(
+      -maxOffset_Y,
+      Math.min(lastPosition.current.y + deltaY, maxOffset_Y)
+    );
+
+    setPosition({ x: newX, y: newY });
   };
 
   const handleMouseUp = () => {
     isDragging.current = false;
+    lastPosition.current = { ...position };
   };
 
   const handleWheel = (e: React.WheelEvent) => {
+    // Optional: Add wheel zoom support if desired, or keep generic scroll
     e.preventDefault();
     if (e.deltaY < 0) {
       onZoomIn();
@@ -59,30 +110,27 @@ export default function ImageViewer({
     }
   };
 
-  const handleDoubleClick = () => {
-    onReset();
-    setOffsetX(0);
-    setOffsetY(0);
-  };
-
   return (
-    <div className="flex flex-col h-full bg-black relative group">
-      {/* Main Image Area */}
+    <div className="flex flex-col h-full bg-black relative group overflow-hidden select-none">
+      {/* Viewport Container */}
       <div
-        className="flex-1 relative overflow-hidden cursor-grab active:cursor-grabbing"
+        ref={containerRef}
+        className={`flex-1 relative w-full h-full overflow-hidden outline-none ${
+          zoomLevel > 1
+            ? "cursor-grab active:cursor-grabbing"
+            : "cursor-default"
+        }`}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
         onWheel={handleWheel}
-        onDoubleClick={handleDoubleClick}
       >
-        {/* Empty/Loading State Grid Background */}
+        {/* Background Grid (Medical Style) */}
         <div
-          className="absolute inset-0 opacity-20 pointer-events-none"
+          className="absolute inset-0 opacity-10 pointer-events-none"
           style={{
-            backgroundImage:
-              "linear-gradient(to right, #333 1px, transparent 1px), linear-gradient(to bottom, #333 1px, transparent 1px)",
+            backgroundImage: "radial-gradient(#FFF 1px, transparent 1px)",
             backgroundSize: "40px 40px",
           }}
         />
@@ -90,107 +138,125 @@ export default function ImageViewer({
         {isLoading ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 z-10">
             <div className="animate-spin rounded-full h-10 w-10 border-2 border-primary border-t-transparent mb-4" />
-            <p className="text-muted-foreground text-xs animate-pulse">
-              Loading DICOM data...
+            <p className="text-muted-foreground text-xs animate-pulse font-mono tracking-widest">
+              LOADING DICOM...
             </p>
           </div>
         ) : (
+          /* Transform Layer - Applies Zoom & Pan */
           <div
-            className="absolute inset-0 flex items-center justify-center"
+            className="w-full h-full flex items-center justify-center origin-center will-change-transform"
             style={{
-              transform: `translate(${offsetX}px, ${offsetY}px) scale(${zoomLevel})`,
+              transform: `translate(${position.x}px, ${position.y}px) scale(${zoomLevel})`,
               transition: isDragging.current
                 ? "none"
-                : "transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+                : "transform 0.15s cubic-bezier(0.2, 0, 0, 1)",
             }}
           >
-            {/* Placeholder for actual image */}
+            {/* Image Container - Fills Viewport */}
             <div
-              className={`w-[500px] h-[500px] bg-slate-900 border border-slate-800 shadow-2xl flex items-center justify-center relative overflow-hidden transition-all duration-300 ${
-                imageMode === "processed" ? "shadow-primary/10" : ""
-              }`}
+              className={`w-full h-full relative overflow-hidden transition-all duration-500 bg-slate-950 flex items-center justify-center`}
             >
-              {/* Simulated Image Content */}
-              <div className="absolute inset-0 bg-linear-to-br from-slate-800 to-black opacity-50" />
-              <div className="text-center z-10 opacity-40 select-none pointer-events-none">
-                <div className="text-6xl mb-4 grayscale filter drop-shadow-lg">
-                  {imageMode === "original" ? "📷" : "🔮"}
+              {/* Actual Image Simulation */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                {/* This gradient simulates the ultrasound noise texture */}
+                <div
+                  className={`w-full h-full opacity-60 bg-[url('/noise.png')] bg-repeat opacity-[0.4]`}
+                  style={{
+                    backgroundImage:
+                      "radial-gradient(circle at center, #1e293b 0%, #020617 100%)",
+                  }}
+                />
+
+                {/* Centered Content Icon */}
+                <div className="z-10 text-center opacity-80 mix-blend-screen">
+                  <div className="text-[120px] mb-4 blur-[1px] opacity-50 grayscale">
+                    {imageMode === "original" ? "📷" : "🔮"}
+                  </div>
                 </div>
-                <p className="text-slate-400 font-mono text-xs uppercase tracking-widest">
-                  {imageMode === "original"
-                    ? "Raw Ultrasound"
-                    : "AI Segmentation"}
-                </p>
+
+                {/* Mode Indicator Overlay - Part of image now */}
+                <div className="absolute bottom-12 left-0 right-0 text-center pointer-events-none">
+                  <p className="text-slate-500/50 font-mono text-[10px] uppercase tracking-[0.5em]">
+                    {imageMode === "original"
+                      ? "B-Mode / Raw"
+                      : "AI Segmentation Overlay"}
+                  </p>
+                </div>
               </div>
 
-              {/* AI Overlay Simulation */}
+              {/* AI Overlays - Scaled with image */}
               {imageMode === "processed" && (
-                <>
-                  <div className="absolute top-1/3 left-1/4 w-32 h-24 border-2 border-emerald-500/70 bg-emerald-500/10 rounded-sm animate-pulse" />
-                  <div className="absolute top-1/2 right-1/3 w-20 h-20 border border-blue-500/50 bg-blue-500/10 rounded-full blur-sm" />
-                </>
+                <div className="absolute inset-0 pointer-events-none">
+                  {/* Example ROI */}
+                  <div className="absolute top-[30%] left-[25%] w-[35%] h-[40%] border border-emerald-500/80 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.2)] animate-pulse backdrop-blur-[1px]">
+                    <div className="absolute -top-6 left-0 bg-emerald-900/80 text-emerald-400 text-[10px] px-2 py-0.5 border border-emerald-500/30">
+                      TI-RADS 4
+                    </div>
+                  </div>
+
+                  {/* Calcification Marker */}
+                  <div className="absolute top-[45%] right-[35%] w-6 h-6 rounded-full border border-blue-400/60 bg-blue-400/20 shadow-[0_0_10px_rgba(96,165,250,0.4)]" />
+                </div>
               )}
+
+              {/* Scanlines Effect */}
+              <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-[5] bg-[length:100%_4px,6px_100%] opacity-20" />
             </div>
           </div>
         )}
       </div>
 
-      {/* Overlays: Top Left Legend */}
-      <div className="absolute top-4 left-4 bg-black/80 backdrop-blur-sm border border-white/10 p-2.5 rounded-md shadow-lg pointer-events-none select-none">
-        <p className="text-[10px] uppercase text-muted-foreground mb-1.5 font-bold tracking-wider">
-          Overlay Legend
-        </p>
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 bg-emerald-500/20 border border-emerald-500 rounded-[1px]" />
-            <span className="text-xs text-slate-300">Nodule Boundary</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 bg-blue-500/20 border border-blue-500 rounded-full" />
-            <span className="text-xs text-slate-300">Calcification</span>
-          </div>
-        </div>
+      {/* Overlays UI - Stays Fixed on Screen (HUD) */}
+
+      {/* Top Left - Patient/Scan Tech Data */}
+      <div className="absolute top-4 left-4 pointer-events-none font-mono text-[10px] text-emerald-500/80 flex flex-col gap-1 z-20 mix-blend-screen">
+        <span>FR: 42Hz</span>
+        <span>DR: 65dB</span>
+        <span>GN: 48</span>
+        <span>D: 4.0cm</span>
       </div>
 
       {/* Floating Controls - Bottom Center */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/90 backdrop-blur-md border border-white/10 p-1.5 rounded-xl shadow-2xl">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-zinc-900/90 backdrop-blur-md border border-white/10 p-1.5 rounded-full shadow-2xl z-30 transition-opacity hover:bg-zinc-900">
         {/* Mode Switcher */}
-        <div className="flex bg-white/5 rounded-lg p-0.5 mr-2">
+        <div className="flex bg-white/5 rounded-full p-0.5 mr-2">
           <button
             onClick={() => onModeChange("original")}
-            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+            className={`px-4 py-1.5 text-xs font-medium rounded-full transition-all duration-300 ${
               imageMode === "original"
                 ? "bg-zinc-700 text-white shadow-sm"
-                : "text-zinc-400 hover:text-zinc-200"
+                : "text-zinc-500 hover:text-zinc-300"
             }`}
           >
-            Original
+            Raw
           </button>
           <button
             onClick={() => onModeChange("processed")}
-            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+            className={`px-4 py-1.5 text-xs font-medium rounded-full transition-all duration-300 ${
               imageMode === "processed"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-zinc-400 hover:text-zinc-200"
+                ? "bg-emerald-600 text-white shadow-[0_0_15px_rgba(5,150,105,0.4)]"
+                : "text-zinc-500 hover:text-zinc-300"
             }`}
           >
             AI Analysis
           </button>
         </div>
 
-        <div className="w-px h-6 bg-white/10 mx-1" />
+        <div className="w-px h-5 bg-white/10 mx-1" />
 
-        {/* Zoom Tools */}
+        {/* Zoom Controls */}
         <Button
           variant="ghost"
           size="icon"
           onClick={onZoomOut}
-          className="h-8 w-8 text-zinc-400 hover:text-white hover:bg-white/10"
+          disabled={zoomLevel <= 0.5}
+          className="h-8 w-8 rounded-full text-zinc-400 hover:text-white hover:bg-white/10 disabled:opacity-30"
         >
           <ZoomOut className="h-4 w-4" />
         </Button>
 
-        <span className="text-xs font-mono text-zinc-300 w-12 text-center select-none">
+        <span className="text-xs font-mono text-zinc-300 w-12 text-center select-none tabular-nums">
           {Math.round(zoomLevel * 100)}%
         </span>
 
@@ -198,18 +264,19 @@ export default function ImageViewer({
           variant="ghost"
           size="icon"
           onClick={onZoomIn}
-          className="h-8 w-8 text-zinc-400 hover:text-white hover:bg-white/10"
+          disabled={zoomLevel >= 3}
+          className="h-8 w-8 rounded-full text-zinc-400 hover:text-white hover:bg-white/10 disabled:opacity-30"
         >
           <ZoomIn className="h-4 w-4" />
         </Button>
 
-        <div className="w-px h-6 bg-white/10 mx-1" />
+        <div className="w-px h-5 bg-white/10 mx-1" />
 
         <Button
           variant="ghost"
           size="icon"
           onClick={onReset}
-          className="h-8 w-8 text-zinc-400 hover:text-white hover:bg-white/10"
+          className="h-8 w-8 rounded-full text-zinc-400 hover:text-white hover:bg-white/10"
           title="Reset View"
         >
           <RotateCcw className="h-3.5 w-3.5" />
