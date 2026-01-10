@@ -10,7 +10,7 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "ThyroVision",
   description: "AI-assisted thyroid ultrasound analysis platform for clinical decision support",
-  generator: "v0.app",
+  generator: "none",
   icons: {
     icon: [
       {
