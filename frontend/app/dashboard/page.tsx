@@ -1,168 +1,231 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Plus, LogOut, Calendar, User } from "lucide-react"
-import Link from "next/link"
-import NewScanPanel from "@/components/new-scan-panel"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Plus, LogOut, ArrowUpDown, Filter } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import NewScanPanel from "@/components/new-scan-panel";
+import StatsStrip from "@/components/dashboard/stats-strip";
+import PatientCard from "@/components/dashboard/patient-card";
+import EmptyState from "@/components/dashboard/empty-state";
+
+type PatientStatus = "new" | "reviewed" | "high-risk" | "feedback-pending";
 
 export default function DashboardPage() {
-  const [isNewScanOpen, setIsNewScanOpen] = useState(false)
+  const [isNewScanOpen, setIsNewScanOpen] = useState(false);
 
-  // Mock patient data
+  // Improved Mock Patient Data with Status Variety
   const patients = [
     {
       id: "1",
-      name: "John Smith",
-      age: 52,
-      gender: "M",
-      lastScan: "2024-12-28",
-      tirads: "3",
-      status: "completed",
+      name: "Eleanor Pena",
+      age: 58,
+      gender: "F",
+      lastScan: "2024-01-02",
+      tirads: "4",
+      status: "high-risk" as PatientStatus,
     },
     {
       id: "2",
-      name: "Sarah Johnson",
-      age: 45,
-      gender: "F",
-      lastScan: "2024-12-20",
-      tirads: "2",
-      status: "completed",
+      name: "John Smith",
+      age: 52,
+      gender: "M",
+      lastScan: "2023-12-28",
+      tirads: "5",
+      status: "new" as PatientStatus,
     },
     {
       id: "3",
-      name: "Michael Chen",
-      age: 58,
-      gender: "M",
-      lastScan: "2024-12-15",
-      tirads: "4",
-      status: "completed",
+      name: "Sarah Johnson",
+      age: 45,
+      gender: "F",
+      lastScan: "2023-12-20",
+      tirads: "2",
+      status: "reviewed" as PatientStatus,
     },
     {
       id: "4",
+      name: "Michael Chen",
+      age: 63,
+      gender: "M",
+      lastScan: "2023-12-15",
+      tirads: "3",
+      status: "feedback-pending" as PatientStatus,
+    },
+    {
+      id: "5",
       name: "Emma Williams",
       age: 38,
       gender: "F",
-      lastScan: "2024-12-10",
+      lastScan: "2023-12-10",
       tirads: "2",
-      status: "completed",
+      status: "reviewed" as PatientStatus,
     },
-  ]
+  ];
 
-  const getTiRADSColor = (level: string) => {
-    switch (level) {
-      case "1":
-      case "2":
-        return "bg-green-900/30 text-green-200"
-      case "3":
-        return "bg-yellow-900/30 text-yellow-200"
-      case "4":
-      case "5":
-        return "bg-red-900/30 text-red-200"
-      default:
-        return "bg-gray-900/30 text-gray-200"
+  const [sortBy, setSortBy] = useState<"urgency" | "recent" | "name">(
+    "urgency"
+  );
+
+  // Sorting Logic
+  const sortedPatients = [...patients].sort((a, b) => {
+    if (sortBy === "urgency") {
+      // Priority: High Risk -> New -> Feedback Pending -> Reviewed
+      const priority = {
+        "high-risk": 0,
+        new: 1,
+        "feedback-pending": 2,
+        reviewed: 3,
+      };
+      return priority[a.status] - priority[b.status];
     }
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    })
-  }
+    if (sortBy === "recent") {
+      return new Date(b.lastScan).getTime() - new Date(a.lastScan).getTime();
+    }
+    if (sortBy === "name") {
+      return a.name.localeCompare(b.name);
+    }
+    return 0;
+  });
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-6 sm:px-6 lg:px-8">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">ThyroVision</h1>
-            <p className="text-sm text-muted-foreground">Doctor Dashboard</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex flex-col items-end">
-              <p className="text-sm font-medium text-foreground">Dr. Sarah Miller</p>
-              <p className="text-xs text-muted-foreground">Radiology Department</p>
+      <header className="border-b border-border bg-card sticky top-0 z-30">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-primary/20 flex items-center justify-center">
+              <span className="text-primary font-bold">TV</span>
             </div>
-            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-              <LogOut className="h-4 w-4" />
+            <div>
+              <h1 className="text-lg font-bold text-foreground leading-none">
+                ThyroVision
+              </h1>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
+                Radiology Suite
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-6">
+            <div className="hidden sm:flex flex-col items-end">
+              <p className="text-sm font-medium text-foreground">
+                Dr. Sarah Miller
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Senior Radiologist
+              </p>
+            </div>
+            <div className="h-8 w-px bg-border hidden sm:block" />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
             </Button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-        {/* New Scan Button */}
-        <div className="mb-8 flex items-center justify-between">
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        {/* Top Actions Row */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-foreground">Recent Patients</h2>
-            <p className="text-sm text-muted-foreground">Manage and review patient analyses</p>
+            <h2 className="text-2xl font-semibold text-foreground tracking-tight">
+              Dashboard Overview
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Welcome back, Dr. Miller. You have{" "}
+              <span className="text-primary font-medium">8 new analyses</span>{" "}
+              today.
+            </p>
           </div>
           <Button
             onClick={() => setIsNewScanOpen(true)}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground flex items-center gap-2"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 px-6"
           >
-            <Plus className="h-4 w-4" />
-            New Scan
+            <Plus className="h-5 w-5 mr-2" />
+            Start New Scan
           </Button>
         </div>
 
-        {/* Patient List */}
-        <div className="space-y-4">
-          {patients.map((patient) => (
-            <Card key={patient.id} className="border-border bg-card p-6 transition-all hover:border-secondary/50">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                {/* Patient Info */}
-                <div className="flex-1">
-                  <div className="flex flex-col gap-1">
-                    <h3 className="font-semibold text-foreground">{patient.name}</h3>
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <User className="h-4 w-4" />
-                        <span>
-                          {patient.age}y {patient.gender}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        <span>Last scan: {formatDate(patient.lastScan)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+        {/* Stats Strip */}
+        <StatsStrip />
 
-                {/* TiRADS Badge */}
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <p className="text-xs text-muted-foreground mb-2">Latest TIRADS</p>
-                    <Badge className={`${getTiRADSColor(patient.tirads)} text-base px-3 py-1`}>
-                      TR {patient.tirads}
-                    </Badge>
-                  </div>
+        {/* Patient List Section */}
+        <div className="space-y-4 max-h-[calc(100vh-300px)] overflow-y-auto custom-scrollbar pr-2">
+          {/* List Controls / Smart Sorting */}
+          <div className="flex items-center justify-between border-b border-border pb-4">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-foreground">Recent Scans</h3>
+              <span className="text-xs bg-secondary/50 text-secondary-foreground px-2 py-0.5 rounded-full">
+                {patients.length}
+              </span>
+            </div>
 
-                  {/* View Analysis Button */}
-                  <Link href={`/analysis/${patient.id}`}>
-                    <Button
-                      variant="outline"
-                      className="border-secondary text-secondary hover:bg-secondary/10 bg-transparent"
-                    >
-                      View Analysis
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </Card>
-          ))}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs text-muted-foreground hover:text-foreground"
+              >
+                <Filter className="h-3 w-3 mr-1.5" /> Filter
+              </Button>
+              <div className="h-4 w-px bg-border" />
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    <ArrowUpDown className="h-3 w-3 mr-1.5" /> Sort:{" "}
+                    <span className="text-foreground ml-1 font-medium capitalize">
+                      {sortBy}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setSortBy("urgency")}>
+                    Urgency (High Risk first)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortBy("recent")}>
+                    Most Recent
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortBy("name")}>
+                    Patient Name
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+
+          {/* List Content */}
+          {sortedPatients.length > 0 ? (
+            <div className="space-y-3">
+              {sortedPatients.map((patient) => (
+                <PatientCard key={patient.id} patient={patient} />
+              ))}
+            </div>
+          ) : (
+            <EmptyState onAction={() => setIsNewScanOpen(true)} />
+          )}
         </div>
       </main>
 
       {/* New Scan Panel */}
-      <NewScanPanel isOpen={isNewScanOpen} onClose={() => setIsNewScanOpen(false)} />
+      <NewScanPanel
+        isOpen={isNewScanOpen}
+        onClose={() => setIsNewScanOpen(false)}
+      />
     </div>
-  )
+  );
 }

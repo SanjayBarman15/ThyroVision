@@ -52,19 +52,20 @@ export default function PredictionCard({ analysis }: PredictionCardProps) {
         </div>
 
         <div className="space-y-1.5">
-          <div className="flex justify-between items-center text-xs">
+          <div className="flex justify-between items-center text-xs mb-1">
             <span className="text-muted-foreground font-medium">
               Model Confidence
             </span>
-            <span className="text-foreground font-mono">
-              {Math.round(analysis.confidence * 100)}%
-            </span>
           </div>
-          <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+          <div className="h-6 w-full bg-secondary/30 rounded-full overflow-hidden relative">
             <div
-              className="h-full bg-primary rounded-full"
+              className="h-full bg-zinc-500 flex items-center justify-end px-2 transition-all duration-500"
               style={{ width: `${analysis.confidence * 100}%` }}
-            />
+            >
+              <span className="text-[10px] font-bold text-white font-mono leading-none">
+                {Math.round(analysis.confidence * 100)}%
+              </span>
+            </div>
           </div>
         </div>
       </div>
