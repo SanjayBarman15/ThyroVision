@@ -136,11 +136,8 @@ export default function ImageViewer({
         />
 
         {isLoading ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 z-10">
-            <div className="animate-spin rounded-full h-10 w-10 border-2 border-primary border-t-transparent mb-4" />
-            <p className="text-muted-foreground text-xs animate-pulse font-mono tracking-widest">
-              LOADING DICOM...
-            </p>
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
+            <p className="text-white text-sm font-medium">Loading...</p>
           </div>
         ) : (
           /* Transform Layer - Applies Zoom & Pan */
