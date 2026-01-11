@@ -14,60 +14,105 @@ import StatsStrip from "@/components/dashboard/stats-strip";
 import PatientCard from "@/components/dashboard/patient-card";
 import EmptyState from "@/components/dashboard/empty-state";
 import { signout } from "@/app/login/actions";
+import { createClient } from "@/utils/supabase/client";
+import { useEffect, useCallback } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type PatientStatus = "new" | "reviewed" | "high-risk" | "feedback-pending";
 
+interface Patient {
+  id: string;
+  name: string;
+  age: number;
+  gender: string;
+  lastScan: string;
+  tirads: string;
+  status: PatientStatus;
+}
+
 export default function DashboardPage() {
   const [isNewScanOpen, setIsNewScanOpen] = useState(false);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [doctorName, setDoctorName] = useState("");
+  const [stats, setStats] = useState({
+    totalPatients: 0,
+    newScansCount: 0,
+  });
 
-  // Improved Mock Patient Data with Status Variety
-  const patients = [
-    {
-      id: "1",
-      name: "Eleanor Pena",
-      age: 58,
-      gender: "F",
-      lastScan: "2024-01-02",
-      tirads: "4",
-      status: "high-risk" as PatientStatus,
-    },
-    {
-      id: "2",
-      name: "John Smith",
-      age: 52,
-      gender: "M",
-      lastScan: "2023-12-28",
-      tirads: "5",
-      status: "new" as PatientStatus,
-    },
-    {
-      id: "3",
-      name: "Sarah Johnson",
-      age: 45,
-      gender: "F",
-      lastScan: "2023-12-20",
-      tirads: "2",
-      status: "reviewed" as PatientStatus,
-    },
-    {
-      id: "4",
-      name: "Michael Chen",
-      age: 63,
-      gender: "M",
-      lastScan: "2023-12-15",
-      tirads: "3",
-      status: "feedback-pending" as PatientStatus,
-    },
-    {
-      id: "5",
-      name: "Emma Williams",
-      age: 38,
-      gender: "F",
-      lastScan: "2023-12-10",
-      tirads: "2",
-      status: "reviewed" as PatientStatus,
-    },
-  ];
+  const supabase = createClient();
+
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      // Fetch doctor details
+      const { data: doctorData } = await supabase
+        .from("doctors")
+        .select("name")
+        .eq("id", user.id)
+        .single();
+
+      if (doctorData) {
+        setDoctorName(doctorData.name);
+      }
+
+      // Fetch patients for this doctor
+      // 1. Get Doctor ID (which is user.id)
+      // 2. Query patients
+      const { data: patientsData, error } = await supabase
+        .from("patients")
+        .select("*")
+        .eq("doctor_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching patients:", error);
+        return;
+      }
+
+      if (patientsData) {
+        // Map DB data to UI format
+        const formattedPatients: Patient[] = patientsData.map((p) => ({
+          id: p.id,
+          name: `${p.first_name} ${p.last_name}`,
+          age: p.age || 0, // Fallback if age not calculated
+          gender: p.gender,
+          lastScan: new Date(p.created_at).toISOString().split("T")[0],
+          tirads: "N/A", // Placeholder until analysis is linked
+          status: "new", // Default status
+        }));
+
+        setPatients(formattedPatients);
+
+        // Calculate Stats
+        const oneDayAgo = new Date();
+        oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+
+        const newScans = patientsData.filter(
+          (p) => new Date(p.created_at) > oneDayAgo
+        ).length;
+
+        setStats({
+          totalPatients: patientsData.length,
+          newScansCount: newScans,
+        });
+      }
+    } catch (error) {
+      console.error("Dashboard data fetch error:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [supabase]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   const [sortBy, setSortBy] = useState<"urgency" | "recent" | "name">(
     "urgency"
@@ -115,7 +160,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-6">
             <div className="hidden sm:flex flex-col items-end">
               <p className="text-sm font-medium text-foreground">
-                Dr. Sarah Miller
+                {doctorName || "Doctor"}
               </p>
               <p className="text-xs text-muted-foreground">
                 Senior Radiologist
@@ -146,8 +191,10 @@ export default function DashboardPage() {
               Dashboard Overview
             </h2>
             <p className="text-sm text-muted-foreground">
-              Welcome back, Dr. Miller. You have{" "}
-              <span className="text-primary font-medium">8 new analyses</span>{" "}
+              Welcome back, {doctorName || "Doctor"}. You have{" "}
+              <span className="text-primary font-medium">
+                {stats.newScansCount} new analyses
+              </span>{" "}
               today.
             </p>
           </div>
@@ -161,7 +208,10 @@ export default function DashboardPage() {
         </div>
 
         {/* Stats Strip */}
-        <StatsStrip />
+        <StatsStrip
+          totalPatients={stats.totalPatients}
+          newScansCount={stats.newScansCount}
+        />
 
         {/* Patient List Section */}
         <div className="space-y-4 max-h-[calc(100vh-300px)] overflow-y-auto custom-scrollbar pr-2">
@@ -213,7 +263,13 @@ export default function DashboardPage() {
           </div>
 
           {/* List Content */}
-          {sortedPatients.length > 0 ? (
+          {loading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-24 w-full rounded-lg" />
+              ))}
+            </div>
+          ) : sortedPatients.length > 0 ? (
             <div className="space-y-3">
               {sortedPatients.map((patient) => (
                 <PatientCard key={patient.id} patient={patient} />
@@ -229,6 +285,7 @@ export default function DashboardPage() {
       <NewScanPanel
         isOpen={isNewScanOpen}
         onClose={() => setIsNewScanOpen(false)}
+        onScanComplete={fetchDashboardData}
       />
     </div>
   );

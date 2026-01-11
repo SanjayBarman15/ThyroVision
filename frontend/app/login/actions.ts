@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createClient } from "@/utils/supabase/server";
+import { createClient, createAdminClient } from "@/utils/supabase/server";
 
 export async function login(prevState: any, formData: FormData) {
   const supabase = await createClient();
@@ -37,16 +37,39 @@ export async function signup(prevState: any, formData: FormData) {
     },
   };
 
-  const { error } = await supabase.auth.signUp(data);
+  const { data: authData, error } = await supabase.auth.signUp(data);
 
   if (error) {
-    // Check if it's a "user already exists" error or similar if needed
     return { error: error.message };
   }
 
-  // If email confirmation is enabled, you might want to redirect to a "check email" page
-  // For now, we'll assume auto-confirm or redirect to dashboard if session exists (which it might not if confirmation required)
-  // But typically for simple flows:
+  // Manually create doctor profile if signup was successful and we have a user
+  // This avoids relying on database triggers which might be fragile
+  if (authData.user) {
+    const supabaseAdmin = await createAdminClient();
+
+    // We use upsert here. If the profile was created by a trigger (if you have one working),
+    // this will simply update it or do nothing. If not, it creates it.
+    // This makes the code resilient to both scenarios.
+    const { error: profileError } = await supabaseAdmin.from("doctors").upsert({
+      id: authData.user.id,
+      email: data.email,
+      name: data.options.data.full_name,
+      updated_at: new Date().toISOString(),
+    });
+
+    if (profileError) {
+      console.error("Error creating doctor profile:", profileError);
+      // Optional: Logic to delete auth user if profile creation fails?
+      // For now, we will return the error so the user knows something went wrong
+      return {
+        error:
+          "Account created but failed to set up profile: " +
+          profileError.message,
+      };
+    }
+  }
+
   revalidatePath("/", "layout");
   redirect("/dashboard");
 }
