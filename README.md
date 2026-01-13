@@ -1,4 +1,4 @@
-# ThyroVision: Ultrasound AI System  
+# ThyroVision:Thyroid Ultrasound AI System  
 **End-to-End Architecture & Deployment**
 
 ---
@@ -199,7 +199,24 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", 
 ```python
 torch.save(model.state_dict(), "model.pt")
 ```
-
+---
+### 6.3 Model Response
+```
+{
+  "tirads": 4,
+  "confidence": 0.87,
+  "bounding_box": {
+    "x": 120,
+    "y": 90,
+    "width": 200,
+    "height": 160
+  },
+  "processed_image_path": "processed/xyz.png",
+  "model_version": "mock-v1",
+  "inference_time_ms": 423,
+  "created_at": "2024-01-01T00:00:00Z"
+}
+```
 ---
 
 ## 7. Inference Pipeline
