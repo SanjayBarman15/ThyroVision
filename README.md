@@ -1,4 +1,4 @@
-# ThyroVision Ultrasound AI System  
+# ThyroVision: Ultrasound AI System  
 **End-to-End Architecture & Deployment**
 
 ---

@@ -2,11 +2,10 @@ DATABASE SCHEMA FOR MEDICAL IMAGE ANALYSIS
 -- ============================
 -- 1. Doctors Table
 -- ============================
-CREATE TABLE doctors (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT NOT NULL,
+CREATE TABLE public.doctors (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    name TEXT,
     email TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP
 );
@@ -20,20 +19,40 @@ CREATE TABLE patients (
     first_name TEXT,
     last_name TEXT,
     dob DATE,
+    age INT,                  -- optional, can be auto-calculated via trigger
     gender TEXT,
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP DEFAULT NOW(),
+    past_medical_data TEXT  -- optional
 );
 
 -- ============================
--- 3. Images Table
+-- 3. Images Tables
 -- ============================
-CREATE TABLE images (
+CREATE TABLE raw_images (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    patient_id UUID NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
-    doctor_id UUID NOT NULL REFERENCES doctors(id) ON DELETE CASCADE,
+
+    patient_id UUID NOT NULL
+        REFERENCES patients(id) ON DELETE CASCADE,
+
+    doctor_id UUID NOT NULL
+        REFERENCES doctors(id) ON DELETE CASCADE,
+
+    file_path TEXT NOT NULL,
     file_url TEXT NOT NULL,
-    upload_date TIMESTAMP DEFAULT NOW(),
-    notes TEXT
+
+    uploaded_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE processed_images (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    raw_image_id UUID NOT NULL
+        REFERENCES raw_images(id) ON DELETE CASCADE,
+
+    file_path TEXT NOT NULL,
+    file_url TEXT NOT NULL,
+
+    created_at TIMESTAMP DEFAULT NOW()
 );
 
 -- ============================
