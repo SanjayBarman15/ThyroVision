@@ -1,14 +1,61 @@
-{
-  "tirads": 4,
-  "confidence": 0.87,
-  "bounding_box": {
-    "x": 120,
-    "y": 90,
-    "width": 200,
-    "height": 160
-  },
-  "processed_image_path": "processed/xyz.png",
-  "model_version": "mock-v1",
-  "inference_time_ms": 423,
-  "created_at": "2024-01-01T00:00:00Z"
-}
+  {
+    "tirads": 4,
+    "confidence": 0.87,
+    "bounding_box": {
+      "x": 120,
+      "y": 90,
+      "width": 200,
+      "height": 160
+    },
+    "processed_image_path": "processed/xyz.png",
+    "model_version": "mock-v1",
+    "inference_time_ms": 423,
+    "created_at": "2024-01-01T00:00:00Z"
+  }
+
+
+  Example: patients table
+ALTER TABLE patients ENABLE ROW LEVEL SECURITY;
+
+Policy: doctor can only see their own patients
+CREATE POLICY "Doctor sees own patients"
+ON patients
+FOR SELECT
+USING (doctor_id = auth.uid());
+
+Insert policy
+CREATE POLICY "Doctor inserts own patients"
+ON patients
+FOR INSERT
+WITH CHECK (doctor_id = auth.uid());
+
+Storage policy (Supabase SQL)
+CREATE POLICY "Doctors upload own images"
+ON storage.objects
+FOR INSERT
+USING (
+  bucket_id = 'ultrasound-images'
+  AND auth.uid()::text = (storage.foldername(name))[1]
+);
+
+
+🔐 Step 6: Separate ML / training access
+Tables ML team owns (NO frontend access):
+
+training_labels
+
+model_versions
+
+inference_logs
+
+🔒 RLS:
+
+ALTER TABLE training_labels ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Only service role"
+ON training_labels
+FOR ALL
+USING (false);
+
+
+➡️ Only backend (service role) can insert/export.

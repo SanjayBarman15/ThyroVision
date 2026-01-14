@@ -60,12 +60,19 @@ CREATE TABLE processed_images (
 -- ============================
 CREATE TABLE predictions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    image_id UUID NOT NULL REFERENCES images(id) ON DELETE CASCADE,
+
+    raw_image_id UUID NOT NULL
+        REFERENCES raw_images(id) ON DELETE CASCADE,
+
     predicted_class INT NOT NULL,
-    tirads INT NOT NULL,
+    tirads INT NOT NULL CHECK (tirads BETWEEN 1 AND 5),
     confidence FLOAT NOT NULL CHECK (confidence BETWEEN 0 AND 1),
     model_version TEXT NOT NULL,
-    gradcam_url TEXT,
+    is_training_candidate BOOLEAN DEFAULT FALSE,
+
+    processed_image_id UUID
+        REFERENCES processed_images(id),
+
     created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -83,7 +90,26 @@ CREATE TABLE prediction_feedback (
 );
 
 -- ============================
--- 6. System Logs Table (NEW)
+-- 6. Training Labels Table
+-- ============================
+CREATE TABLE training_labels (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    raw_image_id UUID NOT NULL
+        REFERENCES raw_images(id) ON DELETE CASCADE,
+
+    labeled_by TEXT NOT NULL, -- doctor | radiologist | ml_team
+    tirads INT NOT NULL CHECK (tirads BETWEEN 1 AND 5),
+
+    bounding_boxes JSONB,  -- optional (x, y, w, h)
+    notes TEXT,
+
+    approved BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- ============================
+-- 7. System Logs Table (NEW)
 -- ============================
 CREATE TABLE system_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
