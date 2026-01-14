@@ -96,8 +96,10 @@ async def upload_raw_image(
 
     image_id = str(uuid.uuid4())
     ext = file.filename.split(".")[-1]
-
-    file_path = f"raw/{doctor_id}/{patient_id}/{image_id}.{ext}"
+    #raw images path with out raw prefix
+    # file_path = f"raw/{doctor_id}/{patient_id}/{image_id}.{ext}"
+    #raw images path with out raw prefix
+    file_path = f"raw/doctor_{doctor_id}/patient_{patient_id}/image_{image_id}.{ext}"
     file_bytes = await file.read()
 
     try:
