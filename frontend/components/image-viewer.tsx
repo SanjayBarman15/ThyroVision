@@ -8,6 +8,7 @@ import { ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 interface ImageViewerProps {
   zoomLevel: number;
   imageMode: "original" | "processed";
+  imageUrl?: string; // New prop for real images
   onZoomIn: () => void;
   onZoomOut: () => void;
   onReset: () => void;
@@ -17,6 +18,7 @@ interface ImageViewerProps {
 export default function ImageViewer({
   zoomLevel,
   imageMode,
+  imageUrl,
   onZoomIn,
   onZoomOut,
   onReset,
@@ -158,18 +160,31 @@ export default function ImageViewer({
               <div className="absolute inset-0 flex items-center justify-center">
                 {/* This gradient simulates the ultrasound noise texture */}
                 <div
-                  className={`w-full h-full opacity-60 bg-[url('/noise.png')] bg-repeat opacity-[0.4]`}
+                  className="w-full h-full opacity-40"
                   style={{
                     backgroundImage:
                       "radial-gradient(circle at center, #1e293b 0%, #020617 100%)",
                   }}
                 />
 
-                {/* Centered Content Icon */}
-                <div className="z-10 text-center opacity-80 mix-blend-screen">
-                  <div className="text-[120px] mb-4 blur-[1px] opacity-50 grayscale">
-                    {imageMode === "original" ? "📷" : "🔮"}
-                  </div>
+                {/* Centered Content Icon or Real Image */}
+                <div className="z-10 text-center w-full h-full flex items-center justify-center">
+                  {imageUrl ? (
+                    <img
+                      src={imageUrl}
+                      alt="Ultrasound Scan"
+                      className={`max-w-full max-h-full object-contain ${
+                        imageMode === "processed"
+                          ? "brightness-110 contrast-125"
+                          : ""
+                      }`}
+                      onLoad={() => setIsLoading(false)}
+                    />
+                  ) : (
+                    <div className="text-[120px] mb-4 blur-[1px] opacity-50 grayscale">
+                      {imageMode === "original" ? "📷" : "🔮"}
+                    </div>
+                  )}
                 </div>
 
                 {/* Mode Indicator Overlay - Part of image now */}
@@ -198,7 +213,7 @@ export default function ImageViewer({
               )}
 
               {/* Scanlines Effect */}
-              <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-[5] bg-[length:100%_4px,6px_100%] opacity-20" />
+              <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-5 bg-size-[100%_4px,6px_100%] opacity-20" />
             </div>
           </div>
         )}

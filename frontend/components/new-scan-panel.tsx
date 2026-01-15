@@ -210,7 +210,32 @@ export default function NewScanPanel({
         );
       }
 
-      toast.success("Patient and scan uploaded successfully!");
+      const imageData = await imageResponse.json();
+      const imageId = imageData.image_id;
+
+      // 3. Trigger Inference
+      toast.info("Starting AI Analysis...", {
+        icon: <Loader2 className="h-4 w-4 animate-spin" />,
+      });
+      const inferenceResponse = await fetch(`${backendUrl}/inference/run`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ image_id: imageId }),
+      });
+
+      if (!inferenceResponse.ok) {
+        const err = await inferenceResponse.json();
+        throw new Error(
+          `Upload success, but AI analysis failed: ${
+            err.detail || "Unknown error"
+          }`
+        );
+      }
+
+      toast.success("Analysis complete! Scan is ready for review.");
       if (onScanComplete) onScanComplete();
       handleClose();
       router.refresh();

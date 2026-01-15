@@ -67,8 +67,11 @@ CREATE TABLE predictions (
     predicted_class INT NOT NULL,
     tirads INT NOT NULL CHECK (tirads BETWEEN 1 AND 5),
     confidence FLOAT NOT NULL CHECK (confidence BETWEEN 0 AND 1),
+
     model_version TEXT NOT NULL,
-    is_training_candidate BOOLEAN DEFAULT FALSE,
+    training_candidate BOOLEAN DEFAULT FALSE,
+
+    inference_time_ms INT CHECK (inference_time_ms >= 0),
 
     processed_image_id UUID
         REFERENCES processed_images(id),
