@@ -93,6 +93,7 @@ export default function AnalysisPage({
               calcifications: "N/A",
               shape: "N/A",
             },
+            boundingBox: predData.bounding_box,
           });
         }
 
@@ -183,6 +184,7 @@ export default function AnalysisPage({
                   ? rawImage?.file_url
                   : processedImage?.file_url || rawImage?.file_url
               }
+              boundingBox={analysis?.boundingBox}
             />
           </div>
         </SplitPane>

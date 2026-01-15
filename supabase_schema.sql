@@ -73,6 +73,7 @@ CREATE TABLE predictions (
 
     inference_time_ms INT CHECK (inference_time_ms >= 0),
     features JSONB, -- Added for dynamic AI explanation features
+    bounding_box JSONB, -- Added for dynamic ROI display
 
     processed_image_id UUID
         REFERENCES processed_images(id),

@@ -59,14 +59,13 @@ class MockInferenceService:
         conf_min, conf_max = self.CONFIDENCE_BY_TIRADS[tirads]
         confidence = round(random.uniform(conf_min, conf_max), 2)
 
-        bounding_box = None
-        if tirads >= 3:
-            bounding_box = {
-                "x": random.randint(80, 160),
-                "y": random.randint(60, 140),
-                "width": random.randint(140, 260),
-                "height": random.randint(120, 240),
-            }
+        # Generate a bounding box always for now (for verification)
+        bounding_box = {
+            "x": random.randint(80, 160),
+            "y": random.randint(60, 140),
+            "width": random.randint(140, 260),
+            "height": random.randint(120, 240),
+        }
 
         return {
             "predicted_class": predicted_class,

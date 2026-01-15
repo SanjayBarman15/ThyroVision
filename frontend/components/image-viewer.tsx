@@ -8,7 +8,13 @@ import { ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 interface ImageViewerProps {
   zoomLevel: number;
   imageMode: "original" | "processed";
-  imageUrl?: string; // New prop for real images
+  imageUrl?: string;
+  boundingBox?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
   onZoomIn: () => void;
   onZoomOut: () => void;
   onReset: () => void;
@@ -19,6 +25,7 @@ export default function ImageViewer({
   zoomLevel,
   imageMode,
   imageUrl,
+  boundingBox,
   onZoomIn,
   onZoomOut,
   onReset,
@@ -157,10 +164,10 @@ export default function ImageViewer({
               className={`w-full h-full relative overflow-hidden transition-all duration-500 bg-slate-950 flex items-center justify-center`}
             >
               {/* Actual Image Simulation */}
-              <div className="absolute inset-0 flex items-center justify-center">
+              <div className="absolute inset-0">
                 {/* This gradient simulates the ultrasound noise texture */}
                 <div
-                  className="w-full h-full opacity-40"
+                  className="absolute inset-0 opacity-40"
                   style={{
                     backgroundImage:
                       "radial-gradient(circle at center, #1e293b 0%, #020617 100%)",
@@ -168,12 +175,12 @@ export default function ImageViewer({
                 />
 
                 {/* Centered Content Icon or Real Image */}
-                <div className="z-10 text-center w-full h-full flex items-center justify-center">
+                <div className="absolute inset-0 z-10 text-center flex items-center justify-center">
                   {imageUrl ? (
                     <img
                       src={imageUrl}
                       alt="Ultrasound Scan"
-                      className={`max-w-full max-h-full object-contain ${
+                      className={`w-full h-full object-cover ${
                         imageMode === "processed"
                           ? "brightness-110 contrast-125"
                           : ""
@@ -197,18 +204,23 @@ export default function ImageViewer({
                 </div>
               </div>
 
-              {/* AI Overlays - Scaled with image */}
-              {imageMode === "processed" && (
+              {/* AI Overlays - Dynamic ROI */}
+              {imageMode === "processed" && boundingBox && (
                 <div className="absolute inset-0 pointer-events-none">
-                  {/* Example ROI */}
-                  <div className="absolute top-[30%] left-[25%] w-[35%] h-[40%] border border-emerald-500/80 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.2)] animate-pulse backdrop-blur-[1px]">
-                    <div className="absolute -top-6 left-0 bg-emerald-900/80 text-emerald-400 text-[10px] px-2 py-0.5 border border-emerald-500/30">
-                      TI-RADS 4
+                  {/* Dynamic detection box */}
+                  <div
+                    className="absolute border-2 border-emerald-500/80 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.3)] animate-pulse backdrop-blur-[0.5px]"
+                    style={{
+                      left: `${boundingBox.x}px`,
+                      top: `${boundingBox.y}px`,
+                      width: `${boundingBox.width}px`,
+                      height: `${boundingBox.height}px`,
+                    }}
+                  >
+                    <div className="absolute -top-6 left-0 bg-emerald-900/90 text-emerald-400 text-[10px] font-bold px-2 py-0.5 border border-emerald-500/40 rounded-sm">
+                      TI-RADS DETECTED
                     </div>
                   </div>
-
-                  {/* Calcification Marker */}
-                  <div className="absolute top-[45%] right-[35%] w-6 h-6 rounded-full border border-blue-400/60 bg-blue-400/20 shadow-[0_0_10px_rgba(96,165,250,0.4)]" />
                 </div>
               )}
 

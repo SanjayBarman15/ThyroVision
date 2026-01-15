@@ -85,7 +85,7 @@ async def startup_validation():
     logger.info("")
     logger.info("=================================")
     logger.info("ThyroVision Backend is running 🚀")
-    logger.info("Status  : OK")
+    logger.info("Status  : 200 OK")
     logger.info("Service : ThyroVision Backend")
     logger.info("Version : 1.0.0")
     logger.info(f"URL     : http://{host}:{port}")
