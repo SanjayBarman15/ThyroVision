@@ -6,11 +6,6 @@ from datetime import datetime
 from typing import Dict
 
 class MockInferenceService:
-    """
-    Simulates ML inference without using any ML framework.
-    Can be replaced later by a real model with zero API changes.
-    """
-
     MODEL_VERSION = "mock-v1"
 
     CONFIDENCE_BY_TIRADS = {
@@ -21,16 +16,45 @@ class MockInferenceService:
         5: (0.90, 0.99),
     }
 
+    FEATURE_OPTIONS = {
+        "composition": ["Cystic", "Spongiform", "Mixed", "Solid"],
+        "echogenicity": ["Anechoic", "Isoechoic", "Hyperechoic", "Hypoechoic"],
+        "margins": ["Smooth", "Ill-defined", "Irregular"],
+        "calcifications": ["None", "Macrocalcifications", "Microcalcifications"],
+        "shape": ["Wider-than-tall", "Taller-than-wide"],
+    }
+
     def run(self, raw_image_path: str) -> Dict:
         start = time.time()
 
-        # Simulate inference latency
         time.sleep(random.uniform(0.25, 0.6))
-
         inference_time_ms = int((time.time() - start) * 1000)
 
-        tirads = random.randint(1, 5)
-        predicted_class = tirads - 1
+        # 1️⃣ Generate detected features
+        features = {
+            "composition": random.choice(self.FEATURE_OPTIONS["composition"]),
+            "echogenicity": random.choice(self.FEATURE_OPTIONS["echogenicity"]),
+            "margins": random.choice(self.FEATURE_OPTIONS["margins"]),
+            "calcifications": random.choice(self.FEATURE_OPTIONS["calcifications"]),
+            "shape": random.choice(self.FEATURE_OPTIONS["shape"]),
+        }
+
+        # 2️⃣ Infer TI-RADS from features (simple rule-based logic)
+        tirads = 1
+
+        if features["composition"] == "Solid":
+            tirads += 1
+        if features["echogenicity"] == "Hypoechoic":
+            tirads += 1
+        if features["margins"] == "Irregular":
+            tirads += 1
+        if features["calcifications"] == "Microcalcifications":
+            tirads += 1
+        if features["shape"] == "Taller-than-wide":
+            tirads += 1
+
+        tirads = min(tirads, 5)
+        predicted_class = tirads  # matches your DB schema
 
         conf_min, conf_max = self.CONFIDENCE_BY_TIRADS[tirads]
         confidence = round(random.uniform(conf_min, conf_max), 2)
@@ -48,6 +72,7 @@ class MockInferenceService:
             "predicted_class": predicted_class,
             "tirads": tirads,
             "confidence": confidence,
+            "features": features,   # 🔥 THIS is what you asked for
             "bounding_box": bounding_box,
             "model_version": self.MODEL_VERSION,
             "inference_time_ms": inference_time_ms,

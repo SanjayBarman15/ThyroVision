@@ -77,7 +77,7 @@ export default function AnalysisPage({
 
         if (predData) {
           setAnalysis({
-            tiradas: `TR${predData.tirads}`,
+            tirads: `TR${predData.tirads}`,
             confidence: predData.confidence,
             riskLevel:
               predData.tirads >= 4
@@ -86,12 +86,12 @@ export default function AnalysisPage({
                 ? "moderate"
                 : "low",
             explanation: `Mock explanation for TI-RADS ${predData.tirads}. The model version used was ${predData.model_version}. Inference took ${predData.inference_time_ms}ms.`,
-            features: {
-              composition: "Solid",
-              echogenicity: "Hypoechoic",
-              margins: "Irregular",
-              calcifications: "None",
-              shape: "Taller-than-wide",
+            features: predData.features || {
+              composition: "N/A",
+              echogenicity: "N/A",
+              margins: "N/A",
+              calcifications: "N/A",
+              shape: "N/A",
             },
           });
         }

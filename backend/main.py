@@ -1,15 +1,26 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
+import logging
 from dotenv import load_dotenv
 
 from app.api.images import router as images_router
 from app.api.patients import router as patients_router
 from app.api.inference import router as inference_router
 
+# ---------------------------
 # Load environment variables
+# ---------------------------
 load_dotenv()
 
+# ---------------------------
+# Logger (Uvicorn logger)
+# ---------------------------
+logger = logging.getLogger("uvicorn")
+
+# ---------------------------
+# FastAPI App
+# ---------------------------
 app = FastAPI(
     title="ThyroVision Backend",
     description="Backend API for Thyroid Ultrasound Analysis System",
@@ -52,10 +63,11 @@ async def health_check():
     }
 
 # ---------------------------
-# Startup Validation (Safety)
+# Startup Validation & Banner
 # ---------------------------
 @app.on_event("startup")
 async def startup_validation():
+    # Validate required environment variables
     required_envs = [
         "SUPABASE_URL",
         "SUPABASE_ANON_KEY",
@@ -64,3 +76,19 @@ async def startup_validation():
     missing = [env for env in required_envs if not os.getenv(env)]
     if missing:
         raise RuntimeError(f"Missing required environment variables: {missing}")
+
+    # Server info
+    host = os.getenv("HOST", "127.0.0.1")
+    port = os.getenv("PORT", "8000")
+
+    # Startup banner (best possible timing)
+    logger.info("")
+    logger.info("=================================")
+    logger.info("ThyroVision Backend is running 🚀")
+    logger.info("Status  : OK")
+    logger.info("Service : ThyroVision Backend")
+    logger.info("Version : 1.0.0")
+    logger.info(f"URL     : http://{host}:{port}")
+    # logger.info(f"Docs    : http://{host}:{port}/docs")
+    logger.info("=================================")
+    logger.info("")

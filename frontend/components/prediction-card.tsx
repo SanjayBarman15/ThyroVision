@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 
 interface PredictionCardProps {
   analysis: {
-    tiradas: string;
+    tirads: string;
     confidence: number;
     riskLevel: string;
   };
@@ -35,7 +35,7 @@ export default function PredictionCard({ analysis }: PredictionCardProps) {
             </p>
             <div className="flex items-baseline gap-2">
               <span className="text-4xl font-bold text-foreground tracking-tight">
-                {analysis.tiradas}
+                {analysis.tirads}
               </span>
               <Badge
                 variant="outline"

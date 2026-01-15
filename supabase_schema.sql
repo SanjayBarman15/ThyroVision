@@ -72,6 +72,7 @@ CREATE TABLE predictions (
     training_candidate BOOLEAN DEFAULT FALSE,
 
     inference_time_ms INT CHECK (inference_time_ms >= 0),
+    features JSONB, -- Added for dynamic AI explanation features
 
     processed_image_id UUID
         REFERENCES processed_images(id),

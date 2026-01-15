@@ -105,6 +105,7 @@ async def run_inference(
         "confidence": inference["confidence"],
         "model_version": inference["model_version"],
         "inference_time_ms": inference["inference_time_ms"],
+        "features": inference["features"],  # Save dynamic features
         "processed_image_id": processed_image_id,
         "training_candidate": False
     }).execute()
