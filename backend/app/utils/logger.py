@@ -12,7 +12,7 @@ def log_event(
     *,
     level: str,
     action: str,
-    request_id: uuid.UUID,
+    request_id: Optional[uuid.UUID] = None,
     actor_id: Optional[str] = None,
     actor_role: Optional[str] = None,
     resource_type: Optional[str] = None,
@@ -29,6 +29,8 @@ def log_event(
         level_clean = level.upper()
 
         # 2. Prepare payload
+        final_request_id = request_id or uuid.uuid4()
+        
         payload = {
             "level": level_clean,
             "action": action,
@@ -36,7 +38,7 @@ def log_event(
             "actor_role": actor_role,
             "resource_type": resource_type,
             "resource_id": resource_id,
-            "request_id": str(request_id),
+            "request_id": str(final_request_id),
             "metadata": metadata,
             "error_code": error_code,
             "error_message": error_message,

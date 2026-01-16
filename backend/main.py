@@ -1,5 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from app.utils.logger import log_event
 import os
 import logging
 from dotenv import load_dotenv
@@ -57,6 +60,43 @@ app.include_router(patients_router)
 app.include_router(inference_router)
 app.include_router(feedback_router)
 app.include_router(logs_router)
+
+# ---------------------------
+# Error Handlers (Logging)
+# ---------------------------
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Logs 422 errors to the database."""
+    req_id = getattr(request.state, "request_id", None)
+    
+    log_event(
+        level="ERROR",
+        action="VALIDATION_ERROR",
+        request_id=req_id,
+        error_message="Input validation failed",
+        metadata={"errors": exc.errors()}
+    )
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors()}
+    )
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Logs all unhandled exceptions (500) to the database."""
+    req_id = getattr(request.state, "request_id", None)
+    
+    log_event(
+        level="FATAL",
+        action="SERVER_ERROR",
+        request_id=req_id,
+        error_message=str(exc),
+        metadata={"type": type(exc).__name__}
+    )
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal Server Error"}
+    )
 
 # ---------------------------
 # Health Check
