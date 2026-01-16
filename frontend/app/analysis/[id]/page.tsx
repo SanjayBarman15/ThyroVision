@@ -96,6 +96,7 @@ export default function AnalysisPage({
               shape: "N/A",
             },
             boundingBox: predData.bounding_box,
+            predictionId: predData.id,
           });
         }
 
@@ -110,6 +111,37 @@ export default function AnalysisPage({
 
         if (procImageData) {
           setProcessedImage(procImageData);
+        }
+
+        // 5. Fetch Existing Feedback
+        if (predData) {
+          try {
+            const {
+              data: { session },
+            } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            const backendUrl =
+              process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+
+            const feedbackRes = await fetch(
+              `${backendUrl}/predictions/${predData.id}/feedback`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            );
+
+            if (feedbackRes.ok) {
+              const data = await feedbackRes.json();
+              if (data.feedback) {
+                setAnalysis((prev: any) => ({
+                  ...prev,
+                  existingFeedback: data.feedback,
+                }));
+              }
+            }
+          } catch (err) {
+            console.error("Error fetching existing feedback:", err);
+          }
         }
       }
     } catch (error) {
@@ -174,8 +206,9 @@ export default function AnalysisPage({
             )}
             <div className="pt-4 border-t border-border mt-6">
               <FeedbackForm
-                isLoading={isLoading}
-                onSubmit={() => setIsLoading(true)}
+                predictionId={analysis?.predictionId}
+                existingFeedback={analysis?.existingFeedback}
+                onSuccess={() => console.log("Feedback submitted successfully")}
               />
             </div>
           </div>

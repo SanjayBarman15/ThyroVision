@@ -86,11 +86,20 @@ CREATE TABLE predictions (
 -- ============================
 CREATE TABLE prediction_feedback (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    prediction_id UUID NOT NULL REFERENCES predictions(id) ON DELETE CASCADE,
-    doctor_id UUID NOT NULL REFERENCES doctors(id) ON DELETE CASCADE,
-    feedback_text TEXT NOT NULL,
-    corrected_class INT,
-    corrected_tirads INT,
+
+    prediction_id UUID NOT NULL
+        REFERENCES predictions(id) ON DELETE CASCADE,
+
+    doctor_id UUID NOT NULL
+        REFERENCES doctors(id) ON DELETE CASCADE,
+
+    is_correct BOOLEAN NOT NULL,
+
+    corrected_tirads INT CHECK (corrected_tirads BETWEEN 1 AND 5),
+    corrected_features JSONB,
+
+    comments TEXT,
+
     created_at TIMESTAMP DEFAULT NOW()
 );
 
