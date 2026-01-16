@@ -64,8 +64,8 @@ export default function AnalysisPage({
         .order("uploaded_at", { ascending: false })
         .limit(1)
         .single();
-
       if (rawImageData) {
+        console.log("📂 Raw Image From DB:", rawImageData.file_url);
         setRawImage(rawImageData);
 
         // 3. Fetch Prediction
@@ -74,6 +74,8 @@ export default function AnalysisPage({
           .select("*")
           .eq("raw_image_id", rawImageData.id)
           .single();
+
+        console.log("🔍 Prediction Data Received:", predData);
 
         if (predData) {
           setAnalysis({
@@ -103,6 +105,8 @@ export default function AnalysisPage({
           .select("*")
           .eq("raw_image_id", rawImageData.id)
           .single();
+
+        console.log("🔮 Processed Image From DB:", procImageData);
 
         if (procImageData) {
           setProcessedImage(procImageData);
@@ -142,6 +146,13 @@ export default function AnalysisPage({
 
   if (!patient) return <div>Patient not found</div>;
 
+  const currentImageUrl =
+    imageMode === "original"
+      ? rawImage?.file_url
+      : processedImage?.file_url || rawImage?.file_url;
+
+  console.log(`🖼️ ImageViewer Mode: ${imageMode} | URL:`, currentImageUrl);
+
   return (
     <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden font-sans">
       <Header patientName={patient.name} scanDate={patient.scanDate} />
@@ -179,11 +190,7 @@ export default function AnalysisPage({
               onReset={handleReset}
               onModeChange={setImageMode}
               // Pass real image URLs
-              imageUrl={
-                imageMode === "original"
-                  ? rawImage?.file_url
-                  : processedImage?.file_url || rawImage?.file_url
-              }
+              imageUrl={currentImageUrl}
               boundingBox={analysis?.boundingBox}
             />
           </div>

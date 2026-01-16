@@ -110,7 +110,7 @@ async def upload_raw_image(
         )
 
         signed_url = supabase_admin.storage.from_("thyrovision-images") \
-            .create_signed_url(file_path, 600)
+            .create_signed_url(file_path, 3600 * 24 * 7) # 1 week expiration
 
         if isinstance(signed_url, dict):
             signed_url = signed_url.get("signedURL") or signed_url.get("signed_url")

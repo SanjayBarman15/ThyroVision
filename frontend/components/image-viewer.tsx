@@ -40,11 +40,12 @@ export default function ImageViewer({
   const dragStart = useRef({ x: 0, y: 0 });
   const lastPosition = useRef({ x: 0, y: 0 });
 
-  // Simulate loading
+  // Reset loading when image changes
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 800);
-    return () => clearTimeout(timer);
-  }, []);
+    if (imageUrl) {
+      setIsLoading(true);
+    }
+  }, [imageUrl]);
 
   // Update position constraints when zoom changes
   useEffect(() => {
@@ -144,88 +145,103 @@ export default function ImageViewer({
           }}
         />
 
-        {isLoading ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
-            <p className="text-white text-sm font-medium">Loading...</p>
-          </div>
-        ) : (
-          /* Transform Layer - Applies Zoom & Pan */
+        {/* Transform Layer - Applies Zoom & Pan */}
+        <div
+          className="absolute inset-0 origin-center will-change-transform"
+          style={{
+            transform: `translate(${position.x}px, ${position.y}px) scale(${zoomLevel})`,
+            transition: isDragging.current
+              ? "none"
+              : "transform 0.15s cubic-bezier(0.2, 0, 0, 1)",
+          }}
+        >
+          {/* Image Container - Fills Viewport */}
           <div
-            className="w-full h-full flex items-center justify-center origin-center will-change-transform"
-            style={{
-              transform: `translate(${position.x}px, ${position.y}px) scale(${zoomLevel})`,
-              transition: isDragging.current
-                ? "none"
-                : "transform 0.15s cubic-bezier(0.2, 0, 0, 1)",
-            }}
+            className={`w-full h-full relative overflow-hidden bg-slate-950`}
           >
-            {/* Image Container - Fills Viewport */}
-            <div
-              className={`w-full h-full relative overflow-hidden transition-all duration-500 bg-slate-950 flex items-center justify-center`}
-            >
-              {/* Actual Image Simulation */}
-              <div className="absolute inset-0">
-                {/* This gradient simulates the ultrasound noise texture */}
-                <div
-                  className="absolute inset-0 opacity-40"
-                  style={{
-                    backgroundImage:
-                      "radial-gradient(circle at center, #1e293b 0%, #020617 100%)",
-                  }}
-                />
+            {/* Actual Image Simulation */}
+            <div className="absolute inset-0">
+              {/* This gradient simulates the ultrasound noise texture */}
+              <div
+                className="absolute inset-0 opacity-40"
+                style={{
+                  backgroundImage:
+                    "radial-gradient(circle at center, #1e293b 0%, #020617 100%)",
+                }}
+              />
 
-                {/* Centered Content Icon or Real Image */}
-                <div className="absolute inset-0 z-10 text-center flex items-center justify-center">
-                  {imageUrl ? (
-                    <img
-                      src={imageUrl}
-                      alt="Ultrasound Scan"
-                      className={`w-full h-full object-cover ${
-                        imageMode === "processed"
-                          ? "brightness-110 contrast-125"
-                          : ""
-                      }`}
-                      onLoad={() => setIsLoading(false)}
-                    />
-                  ) : (
-                    <div className="text-[120px] mb-4 blur-[1px] opacity-50 grayscale">
-                      {imageMode === "original" ? "📷" : "🔮"}
-                    </div>
-                  )}
-                </div>
-
-                {/* Mode Indicator Overlay - Part of image now */}
-                <div className="absolute bottom-12 left-0 right-0 text-center pointer-events-none">
-                  <p className="text-slate-500/50 font-mono text-[10px] uppercase tracking-[0.5em]">
-                    {imageMode === "original"
-                      ? "B-Mode / Raw"
-                      : "AI Segmentation Overlay"}
-                  </p>
-                </div>
+              {/* Centered Content Icon or Real Image */}
+              <div className="absolute inset-0 z-10 text-center flex items-center justify-center">
+                {imageUrl ? (
+                  <img
+                    key={imageUrl}
+                    src={imageUrl}
+                    alt="Ultrasound Scan"
+                    className={`w-full h-full object-cover block ${
+                      imageMode === "processed"
+                        ? "brightness-110 contrast-125"
+                        : ""
+                    }`}
+                    onLoad={() => {
+                      console.log("📸 Image Loaded Successfully:", imageUrl);
+                      setIsLoading(false);
+                    }}
+                    onError={() => {
+                      console.error("❌ Image Load Error:", imageUrl);
+                      setIsLoading(false);
+                    }}
+                  />
+                ) : (
+                  <div className="text-[120px] mb-4 blur-[1px] opacity-50 grayscale">
+                    {imageMode === "original" ? "📷" : "🔮"}
+                  </div>
+                )}
               </div>
 
-              {/* AI Overlays - Dynamic ROI */}
-              {imageMode === "processed" && boundingBox && (
-                <div className="absolute inset-0 pointer-events-none">
-                  {/* Dynamic detection box */}
-                  <div
-                    className="absolute border-2 border-emerald-500/80 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.3)] animate-pulse backdrop-blur-[0.5px]"
-                    style={{
-                      left: `${boundingBox.x}px`,
-                      top: `${boundingBox.y}px`,
-                      width: `${boundingBox.width}px`,
-                      height: `${boundingBox.height}px`,
-                    }}
-                  >
-                    <div className="absolute -top-6 left-0 bg-emerald-900/90 text-emerald-400 text-[10px] font-bold px-2 py-0.5 border border-emerald-500/40 rounded-sm">
-                      TI-RADS DETECTED
-                    </div>
+              {/* Mode Indicator Overlay - Part of image now */}
+              <div className="absolute bottom-12 left-0 right-0 text-center pointer-events-none">
+                <p className="text-slate-500/50 font-mono text-[10px] uppercase tracking-[0.5em]">
+                  {imageMode === "original"
+                    ? "B-Mode / Raw"
+                    : "AI Segmentation Overlay"}
+                </p>
+              </div>
+            </div>
+
+            {/* AI Overlays - Dynamic ROI */}
+            {imageMode === "processed" && boundingBox && (
+              <div className="absolute inset-0 pointer-events-none">
+                {/* Dynamic detection box */}
+                <div
+                  className="absolute border-2 border-emerald-500/80 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.3)] animate-pulse backdrop-blur-[0.5px]"
+                  style={{
+                    left: `${boundingBox.x}px`,
+                    top: `${boundingBox.y}px`,
+                    width: `${boundingBox.width}px`,
+                    height: `${boundingBox.height}px`,
+                  }}
+                >
+                  <div className="absolute -top-6 left-0 bg-emerald-900/90 text-emerald-400 text-[10px] font-bold px-2 py-0.5 border border-emerald-500/40 rounded-sm">
+                    TI-RADS DETECTED
                   </div>
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Scanlines Effect */}
-              <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-5 bg-size-[100%_4px,6px_100%] opacity-20" />
+            {/* Scanlines Effect */}
+            <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-5 bg-size-[100%_4px,6px_100%] opacity-20" />
+          </div>
+        </div>
+
+        {/* Loading Overlay - Now on top of the image components */}
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-50 backdrop-blur-sm transition-all duration-300">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-8 h-8 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+              <p className="text-white text-xs font-mono tracking-widest uppercase opacity-70">
+                Processing {imageMode === "original" ? "B-Mode" : "AI Features"}
+                ...
+              </p>
             </div>
           </div>
         )}

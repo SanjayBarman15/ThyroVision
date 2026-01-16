@@ -80,14 +80,14 @@ async def startup_validation():
     # Server info
     host = os.getenv("HOST", "127.0.0.1")
     port = os.getenv("PORT", "8000")
-
+    Version = os.getenv("VERSION", "1.0.0")
     # Startup banner (best possible timing)
     logger.info("")
     logger.info("=================================")
     logger.info("ThyroVision Backend is running 🚀")
-    logger.info("Status  : 200 OK")
+    logger.info("Status  : 200 OK ✅")
     logger.info("Service : ThyroVision Backend")
-    logger.info("Version : 1.0.0")
+    logger.info("Version : " + Version)
     logger.info(f"URL     : http://{host}:{port}")
     # logger.info(f"Docs    : http://{host}:{port}/docs")
     logger.info("=================================")

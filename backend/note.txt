@@ -1,20 +1,4 @@
 {
-  "predicted_class": 3,
-  "tirads": 4,
-  "confidence": 0.87,
-  "bounding_box": {
-    "x": 120,
-    "y": 90,
-    "width": 200,
-    "height": 160
-  },
-  "processed_image_path": "processed/doctor_<doctor_id>/patient_<patient_id>/image_<image_id>.png",
-  "model_version": "mock-v1",
-  "inference_time_ms": 423,
-  "created_at": "2024-01-01T00:00:00Z"
-}
-
-{
   "predicted_class": 4,
   "tirads": 4,
   "confidence": 0.91,
