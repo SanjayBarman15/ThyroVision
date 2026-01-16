@@ -8,6 +8,7 @@ from app.api.images import router as images_router
 from app.api.patients import router as patients_router
 from app.api.inference import router as inference_router
 from app.api.feedback import router as feedback_router
+from app.api.logs import router as logs_router
 from app.middleware.request_id import request_id_middleware
 
 # ---------------------------
@@ -55,6 +56,7 @@ app.include_router(images_router)
 app.include_router(patients_router)
 app.include_router(inference_router)
 app.include_router(feedback_router)
+app.include_router(logs_router)
 
 # ---------------------------
 # Health Check

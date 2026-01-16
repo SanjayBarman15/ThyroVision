@@ -3,6 +3,7 @@
 from app.db.auth import verify_user
 from fastapi import APIRouter, Depends, HTTPException, Body, Request
 from app.utils.logger import log_event
+from app.db.supabase import supabase_admin
 from app.services.mock_inference import MockInferenceService
 from PIL import Image
 import uuid

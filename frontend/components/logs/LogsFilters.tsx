@@ -48,20 +48,20 @@ export function LogsFilters({
     <div className="flex flex-col gap-4 md:flex-row md:items-center justify-between pb-6">
       <div className="flex flex-1 items-center gap-3 max-w-2xl">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search Resource ID, Request ID or message..."
             value={filters.search}
             onChange={handleSearchChange}
-            className="pl-9 bg-white border-slate-200 focus-visible:ring-slate-400"
+            className="pl-9 bg-card border-border focus-visible:ring-primary"
           />
         </div>
 
         <Select value={filters.level} onValueChange={handleLevelChange}>
-          <SelectTrigger className="w-[130px] bg-white border-slate-200">
+          <SelectTrigger className="w-[130px] bg-card border-border">
             <SelectValue placeholder="All Levels" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-popover border-border">
             <SelectItem value="ALL">All Levels</SelectItem>
             <SelectItem value="INFO">Info</SelectItem>
             <SelectItem value="WARN">Warning</SelectItem>
@@ -71,10 +71,10 @@ export function LogsFilters({
         </Select>
 
         <Select value={filters.action} onValueChange={handleActionChange}>
-          <SelectTrigger className="w-[180px] bg-white border-slate-200">
+          <SelectTrigger className="w-[180px] bg-card border-border">
             <SelectValue placeholder="All Actions" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-popover border-border">
             <SelectItem value="ALL">All Actions</SelectItem>
             <SelectItem value="MODEL_INFERENCE">Model Inference</SelectItem>
             <SelectItem value="IMAGE_UPLOAD">Image Upload</SelectItem>
@@ -89,8 +89,8 @@ export function LogsFilters({
             <Button
               variant="outline"
               className={cn(
-                "w-[240px] justify-start text-left font-normal bg-white border-slate-200",
-                !filters.startDate && "text-slate-500"
+                "w-[240px] justify-start text-left font-normal bg-card border-border",
+                !filters.startDate && "text-muted-foreground"
               )}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
@@ -108,7 +108,10 @@ export function LogsFilters({
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
+          <PopoverContent
+            className="w-auto p-0 border-border bg-popover"
+            align="start"
+          >
             <Calendar
               initialFocus
               mode="range"
@@ -136,7 +139,7 @@ export function LogsFilters({
             variant="ghost"
             size="sm"
             onClick={onClearFilters}
-            className="text-slate-500 h-9 px-2 hover:bg-slate-100"
+            className="text-muted-foreground h-9 px-2 hover:bg-muted"
           >
             <X className="h-4 w-4 mr-1" />
             Clear

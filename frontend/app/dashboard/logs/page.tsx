@@ -23,7 +23,12 @@ const ITEMS_PER_PAGE = 10;
 
 export default function SystemLogsPage() {
   const [allLogs, setAllLogs] = useState<SystemLog[]>([]);
+  const [totalLogs, setTotalLogs] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isConfigLoading, setIsConfigLoading] = useState(true);
+  const [isLoggingEnabled, setIsLoggingEnabled] = useState<boolean | null>(
+    null
+  );
   const [selectedLog, setSelectedLog] = useState<SystemLog | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState<LogFilters>({
@@ -32,23 +37,68 @@ export default function SystemLogsPage() {
     search: "",
   });
 
-  // Load logs initially
+  // Check config and load logs
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setAllLogs(generateMockLogs(100));
-      setIsLoading(false);
-    }, 1200);
-    return () => clearTimeout(timer);
+    async function init() {
+      try {
+        const configRes = await fetch("http://localhost:8000/api/logs/config");
+        const configData = await configRes.json();
+        setIsLoggingEnabled(configData.logging_enabled);
+        setIsConfigLoading(false);
+
+        if (configData.logging_enabled) {
+          await fetchLogs(1, filters);
+        } else {
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("Failed to fetch logs config:", error);
+        toast.error("Failed to connect to backend");
+        setIsConfigLoading(false);
+        setIsLoading(false);
+      }
+    }
+    init();
   }, []);
 
-  const handleRefresh = () => {
+  const fetchLogs = async (page: number, currentFilters: LogFilters) => {
     setIsLoading(true);
-    setTimeout(() => {
-      setAllLogs(generateMockLogs(100));
-      setCurrentPage(1);
+    try {
+      const offset = (page - 1) * ITEMS_PER_PAGE;
+      const queryParams = new URLSearchParams({
+        limit: ITEMS_PER_PAGE.toString(),
+        offset: offset.toString(),
+      });
+
+      if (currentFilters.level !== "ALL")
+        queryParams.append("level", currentFilters.level);
+      if (currentFilters.action !== "ALL")
+        queryParams.append("action", currentFilters.action);
+      // Backend search is not yet implemented for all fields, we'll keep frontend filtering for now if needed or implement backend search later
+
+      const response = await fetch(
+        `http://localhost:8000/api/logs?${queryParams.toString()}`
+      );
+      const data = await response.json();
+
+      setAllLogs(data.logs || []);
+      setTotalLogs(data.total || 0);
+    } catch (error) {
+      toast.error("Failed to fetch logs");
+    } finally {
       setIsLoading(false);
-      toast.success("Logs refreshed from server");
-    }, 800);
+    }
+  };
+
+  useEffect(() => {
+    if (isLoggingEnabled) {
+      fetchLogs(currentPage, filters);
+    }
+  }, [currentPage, filters, isLoggingEnabled]);
+
+  const handleRefresh = () => {
+    fetchLogs(currentPage, filters);
+    toast.success("Logs refreshed from server");
   };
 
   const clearFilters = () => {
@@ -62,62 +112,83 @@ export default function SystemLogsPage() {
     setCurrentPage(1);
   };
 
-  const filteredLogs = useMemo(() => {
-    return allLogs.filter((log) => {
-      const levelMatch = filters.level === "ALL" || log.level === filters.level;
-      const actionMatch =
-        filters.action === "ALL" || log.action === filters.action;
-      const searchMatch =
-        !filters.search ||
-        log.message.toLowerCase().includes(filters.search.toLowerCase()) ||
-        log.id.toLowerCase().includes(filters.search.toLowerCase()) ||
-        log.request_id.toLowerCase().includes(filters.search.toLowerCase()) ||
-        (log.resource_id &&
-          log.resource_id.toLowerCase().includes(filters.search.toLowerCase()));
-
-      let dateMatch = true;
-      if (filters.startDate && filters.endDate) {
-        dateMatch = isWithinInterval(new Date(log.created_at), {
-          start: filters.startDate,
-          end: filters.endDate,
-        });
-      } else if (filters.startDate) {
-        dateMatch = new Date(log.created_at) >= filters.startDate;
-      }
-
-      return levelMatch && actionMatch && searchMatch && dateMatch;
-    });
-  }, [allLogs, filters]);
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredLogs.length / ITEMS_PER_PAGE)
-  );
-  const paginatedLogs = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredLogs.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredLogs, currentPage]);
-
   const stats = useMemo(() => {
+    // Current stats are only for the loaded page or simple counts.
+    // In a real app we might want a separate stats endpoint.
     return {
-      total: allLogs.length,
+      total: totalLogs,
       errors: allLogs.filter((l) => l.level === "ERROR" || l.level === "FATAL")
         .length,
       inference: allLogs.filter((l) => l.action === "MODEL_INFERENCE").length,
     };
-  }, [allLogs]);
+  }, [allLogs, totalLogs]);
+
+  if (isConfigLoading) {
+    return (
+      <div className="container mx-auto py-8 px-4 flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+          <RefreshCw className="h-8 w-8 text-primary animate-spin" />
+          <p className="text-muted-foreground font-medium">
+            Checking system status...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoggingEnabled === false) {
+    return (
+      <div className="container mx-auto py-8 px-4 md:px-6 max-w-7xl animate-in fade-in duration-500">
+        <header className="mb-8">
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-3xl font-bold text-foreground tracking-tight">
+              System Logs
+            </h1>
+            <ShieldAlert className="h-5 w-5 text-destructive mt-1" />
+          </div>
+          <p className="text-muted-foreground text-sm max-w-md italic">
+            Logging is currently disabled for this environment.
+          </p>
+        </header>
+
+        <div className="flex flex-col items-center justify-center py-20 bg-card border border-border rounded-2xl shadow-sm">
+          <Lock className="h-12 w-12 text-muted-foreground/30 mb-4" />
+          <h2 className="text-xl font-bold text-foreground mb-2">
+            Access Restricted
+          </h2>
+          <p className="text-muted-foreground text-center max-w-sm mb-6 px-4">
+            System activity logging has been disabled by the administrator via{" "}
+            <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">
+              SYSTEM_LOGGING_ENABLED
+            </code>
+            .
+          </p>
+          <Button
+            variant="outline"
+            onClick={() => window.location.reload()}
+            className="border-border"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Check again
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const totalPages = Math.max(1, Math.ceil(totalLogs / ITEMS_PER_PAGE));
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6 max-w-7xl animate-in fade-in duration-500">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+            <h1 className="text-3xl font-bold text-foreground tracking-tight">
               System Logs
             </h1>
-            <ShieldCheck className="h-5 w-5 text-blue-500 mt-1" />
+            <ShieldCheck className="h-5 w-5 text-primary mt-1" />
           </div>
-          <p className="text-slate-500 text-sm max-w-md italic">
+          <p className="text-muted-foreground text-sm max-w-md italic">
             Audit trail and system activity monitoring for medical compliance
             and technical debugging.
           </p>
@@ -128,7 +199,7 @@ export default function SystemLogsPage() {
             size="sm"
             onClick={handleRefresh}
             disabled={isLoading}
-            className="h-9 bg-white border-slate-200"
+            className="h-9 bg-card border-border hover:bg-muted"
           >
             <RefreshCw
               className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")}
@@ -138,7 +209,7 @@ export default function SystemLogsPage() {
           <Button
             variant="default"
             size="sm"
-            className="h-9 bg-slate-900 hover:bg-slate-800 shadow-sm transition-all active:scale-95"
+            className="h-9 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-all active:scale-95"
           >
             <Download className="h-4 w-4 mr-2" />
             Export Logs
@@ -153,38 +224,38 @@ export default function SystemLogsPage() {
             icon: Activity,
             label: "Total Events",
             value: stats.total,
-            color: "text-blue-600",
-            bg: "bg-blue-50",
+            color: "text-blue-500",
+            bg: "bg-blue-500/10",
           },
           {
             icon: AlertTriangle,
             label: "System Alerts",
             value: stats.errors,
-            color: "text-rose-600",
-            bg: "bg-rose-50",
+            color: "text-destructive",
+            bg: "bg-destructive/10",
           },
           {
             icon: Database,
             label: "Model Inferences",
             value: stats.inference,
-            color: "text-slate-600",
-            bg: "bg-slate-50",
+            color: "text-primary",
+            bg: "bg-primary/10",
           },
         ].map(
           (stat, i) =>
             stat.icon && (
               <div
                 key={i}
-                className="flex items-center gap-4 p-5 rounded-2xl border border-slate-100 bg-white shadow-sm ring-1 ring-slate-100/50"
+                className="flex items-center gap-4 p-5 rounded-2xl border border-border bg-card shadow-sm ring-1 ring-white/5"
               >
                 <div className={cn("p-3 rounded-xl", stat.bg)}>
                   <stat.icon className={cn("h-6 w-6", stat.color)} />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                     {stat.label}
                   </p>
-                  <p className="text-2xl font-bold text-slate-900 tabular-nums">
+                  <p className="text-2xl font-bold text-foreground tabular-nums">
                     {stat.value}
                   </p>
                 </div>
@@ -204,13 +275,13 @@ export default function SystemLogsPage() {
 
       {isLoading ? (
         <div className="space-y-4">
-          <Skeleton className="h-12 w-full rounded-xl bg-slate-200" />
-          <Skeleton className="h-64 w-full rounded-xl bg-slate-100/50" />
+          <Skeleton className="h-12 w-full rounded-xl bg-muted" />
+          <Skeleton className="h-64 w-full rounded-xl bg-muted/50" />
         </div>
       ) : (
         <div className="animate-in slide-in-from-bottom-2 duration-500">
           <LogsTable
-            logs={paginatedLogs}
+            logs={allLogs}
             onRowClick={setSelectedLog}
             currentPage={currentPage}
             totalPages={totalPages}
@@ -229,5 +300,5 @@ export default function SystemLogsPage() {
 }
 
 // Add AlertTriangle to import from lucide-react if missed
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, ShieldAlert, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";

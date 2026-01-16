@@ -77,14 +77,16 @@
 from app.db.auth import verify_user
 from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, Request
 from app.utils.logger import log_event
+from app.db.supabase import supabase_admin
+import uuid
 
 router = APIRouter(prefix="/images", tags=["Images"])
 
 
 @router.post("/upload-raw")
 async def upload_raw_image(
-    patient_id: str,
     request: Request,
+    patient_id: str = Form(...),
     file: UploadFile = File(...),
     user=Depends(verify_user)
 ):

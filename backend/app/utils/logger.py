@@ -1,5 +1,6 @@
 # backend/app/utils/logger.py
 
+import os
 import uuid
 from typing import Optional, Dict, Any
 from app.db.supabase import supabase_admin
@@ -21,6 +22,9 @@ def log_event(
     error_message: Optional[str] = None,
 ):
     try:
+        if not LOGGING_ENABLED:
+            return
+
         # 1. Enforce uppercase to match Supabase CHECK constraint ('INFO','WARN','ERROR','FATAL')
         level_clean = level.upper()
 

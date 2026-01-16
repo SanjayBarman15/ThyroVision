@@ -182,7 +182,11 @@ export default function NewScanPanel({
 
         if (!patientResponse.ok) {
           const err = await patientResponse.json();
-          throw new Error(err.detail || "Failed to create patient record");
+          const detail =
+            typeof err.detail === "string"
+              ? err.detail
+              : JSON.stringify(err.detail);
+          throw new Error(detail || "Failed to create patient record");
         }
 
         const res = await patientResponse.json();
@@ -203,9 +207,13 @@ export default function NewScanPanel({
 
       if (!imageResponse.ok) {
         const err = await imageResponse.json();
+        const detail =
+          typeof err.detail === "string"
+            ? err.detail
+            : JSON.stringify(err.detail);
         throw new Error(
           `Profile created, but image upload failed: ${
-            err.detail || imageResponse.statusText
+            detail || imageResponse.statusText
           }`
         );
       }
@@ -228,16 +236,20 @@ export default function NewScanPanel({
 
       if (!inferenceResponse.ok) {
         const err = await inferenceResponse.json();
+        const detail =
+          typeof err.detail === "string"
+            ? err.detail
+            : JSON.stringify(err.detail);
         throw new Error(
-          `Upload success, but AI analysis failed: ${
-            err.detail || "Unknown error"
-          }`
+          `Upload success, but AI analysis failed: ${detail || "Unknown error"}`
         );
       }
 
       toast.success("Analysis complete! Scan is ready for review.");
       if (onScanComplete) onScanComplete();
       handleClose();
+      // Redirect to analysis page for this patient
+      router.push(`/analysis/${patientId}`);
       router.refresh();
     } catch (error: any) {
       console.error("[SubmissionError]", error);
