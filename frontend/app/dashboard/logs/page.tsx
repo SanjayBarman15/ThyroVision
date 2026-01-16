@@ -3,7 +3,6 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { SystemLog, LogFilters } from "@/types/logs";
-import { generateMockLogs } from "@/utils/mock-logs";
 import { LogsFilters } from "@/components/logs/LogsFilters";
 import { LogsTable } from "@/components/logs/LogsTable";
 import { LogDetailsDrawer } from "@/components/logs/LogDetailsDrawer";
