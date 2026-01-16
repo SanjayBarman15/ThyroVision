@@ -1,8 +1,8 @@
 # backend/app/api/inference.py
 
-from fastapi import APIRouter, Depends, HTTPException, Body
-from app.db.supabase import supabase_admin
 from app.db.auth import verify_user
+from fastapi import APIRouter, Depends, HTTPException, Body, Request
+from app.utils.logger import log_event
 from app.services.mock_inference import MockInferenceService
 from PIL import Image
 import uuid
@@ -27,6 +27,7 @@ def convert_to_grayscale(image_bytes: bytes) -> bytes:
 
 @router.post("/run")
 async def run_inference(
+    request: Request,
     image_id: str = Body(..., embed=True),
     user=Depends(verify_user)
 ):
@@ -116,18 +117,21 @@ async def run_inference(
 
     prediction = pred_res.data[0]
 
-    # 9️⃣ Optional system log
-    try:
-        supabase_admin.table("system_logs").insert({
-            "doctor_id": user.id,
-            "action": "MODEL_INFERENCE",
-            "resource_type": "prediction",
-            "resource_id": prediction["id"],
-            "status": "SUCCESS",
-            "message": f"TI-RADS {inference['tirads']} predicted"
-        }).execute()
-    except Exception:
-        pass
+    # 9️⃣ System log
+    log_event(
+        level="INFO",
+        action="MODEL_INFERENCE",
+        request_id=request.state.request_id,
+        actor_id=user.id,
+        actor_role="doctor",
+        resource_type="prediction",
+        resource_id=prediction["id"],
+        metadata={
+            "tirads": inference["tirads"],
+            "confidence": inference["confidence"],
+            "inference_time_ms": inference["inference_time_ms"]
+        }
+    )
 
     return {
         "success": True,

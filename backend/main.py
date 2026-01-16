@@ -8,6 +8,7 @@ from app.api.images import router as images_router
 from app.api.patients import router as patients_router
 from app.api.inference import router as inference_router
 from app.api.feedback import router as feedback_router
+from app.middleware.request_id import request_id_middleware
 
 # ---------------------------
 # Load environment variables
@@ -27,6 +28,8 @@ app = FastAPI(
     description="Backend API for Thyroid Ultrasound Analysis System",
     version="1.0.0"
 )
+# REGISTER REQUEST ID MIDDLEWARE
+app.middleware("http")(request_id_middleware)
 
 # ---------------------------
 # CORS Configuration

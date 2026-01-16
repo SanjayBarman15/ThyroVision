@@ -74,17 +74,17 @@
 #     }
 
 
-from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException
-import uuid
-from app.db.supabase import supabase_admin
 from app.db.auth import verify_user
+from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, Request
+from app.utils.logger import log_event
 
 router = APIRouter(prefix="/images", tags=["Images"])
 
 
 @router.post("/upload-raw")
 async def upload_raw_image(
-    patient_id: str = Form(...),
+    patient_id: str,
+    request: Request,
     file: UploadFile = File(...),
     user=Depends(verify_user)
 ):
@@ -116,6 +116,16 @@ async def upload_raw_image(
             signed_url = signed_url.get("signedURL") or signed_url.get("signed_url")
 
     except Exception as e:
+        log_event(
+            level="ERROR",
+            action="UPLOAD_IMAGE_ERROR",
+            request_id=request.state.request_id,
+            actor_id=user.id,
+            actor_role="doctor",
+            resource_type="patient",
+            resource_id=patient_id,
+            error_message=str(e)
+        )
         raise HTTPException(status_code=500, detail="Storage failed")
 
     supabase_admin.table("raw_images").insert({
@@ -125,6 +135,21 @@ async def upload_raw_image(
         "file_path": file_path,
         "file_url": signed_url
     }).execute()
+
+    # 4️⃣ Log success
+    log_event(
+        level="INFO",
+        action="UPLOAD_RAW_IMAGE",
+        request_id=request.state.request_id,
+        actor_id=user.id,
+        actor_role="doctor",
+        resource_type="raw_image",
+        resource_id=image_id,
+        metadata={
+            "patient_id": patient_id,
+            "filename": file.filename
+        }
+    )
 
     return {
         "success": True,

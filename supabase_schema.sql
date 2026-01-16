@@ -127,11 +127,24 @@ CREATE TABLE training_labels (
 -- ============================
 CREATE TABLE system_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    doctor_id UUID REFERENCES doctors(id),
-    action TEXT NOT NULL,              -- e.g. IMAGE_UPLOAD, MODEL_INFERENCE
-    resource_type TEXT,                -- image, prediction, feedback
-    resource_id UUID,                  -- id of image/prediction
-    status TEXT NOT NULL,              -- SUCCESS / FAILURE
-    message TEXT,                      -- optional details
+
+    level TEXT NOT NULL
+        CHECK (level IN ('INFO','WARN','ERROR','FATAL')),
+
+    action TEXT NOT NULL,
+
+    actor_id UUID,
+    actor_role TEXT CHECK (actor_role IN ('doctor','radiologist','system')),
+
+    resource_type TEXT,
+    resource_id UUID,
+
+    request_id UUID NOT NULL,
+
+    metadata JSONB,
+
+    error_code TEXT,
+    error_message TEXT,
+
     created_at TIMESTAMP DEFAULT NOW()
 );

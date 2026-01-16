@@ -3,6 +3,8 @@ from app.db.supabase import supabase_admin
 from app.db.auth import verify_user
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any
+from fastapi import Request
+from app.utils.logger import log_event
 
 router = APIRouter(prefix="/predictions", tags=["Feedback"])
 
@@ -24,6 +26,7 @@ class FeedbackSubmit(BaseModel):
 async def submit_feedback(
     prediction_id: str,
     feedback: FeedbackSubmit,
+    request: Request,
     user=Depends(verify_user)
 ):
     # 1️⃣ Ensure prediction exists
@@ -74,12 +77,37 @@ async def submit_feedback(
             .insert(feedback_data) \
             .execute()
     except Exception as e:
+        log_event(
+            level="ERROR",
+            action="SUBMIT_FEEDBACK_ERROR",
+            request_id=request.state.request_id,
+            actor_id=user.id,
+            actor_role="doctor",
+            resource_type="prediction",
+            resource_id=prediction_id,
+            error_message=str(e)
+        )
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
     if not res.data:
         raise HTTPException(status_code=500, detail="Failed to save feedback")
 
     saved_feedback = res.data[0]
+
+    # 4.5️⃣ Log success
+    log_event(
+        level="INFO",
+        action="SUBMIT_FEEDBACK",
+        request_id=request.state.request_id,
+        actor_id=user.id,
+        actor_role="doctor",
+        resource_type="prediction",
+        resource_id=prediction_id,
+        metadata={
+            "is_correct": feedback.is_correct,
+            "tirads": feedback.corrected_tirads
+        }
+    )
 
     # 5️⃣ Mark prediction as training candidate if incorrect
     if not feedback.is_correct:

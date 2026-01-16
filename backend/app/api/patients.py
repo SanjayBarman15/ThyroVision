@@ -51,6 +51,8 @@ from app.db.supabase import supabase_admin
 from app.db.auth import verify_user
 from pydantic import BaseModel
 from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, Request
+from app.utils.logger import log_event
 
 router = APIRouter(prefix="/patients", tags=["Patients"])
 
@@ -64,6 +66,7 @@ class PatientCreate(BaseModel):
 @router.post("/")
 async def create_patient(
     patient: PatientCreate,
+    request: Request,
     user=Depends(verify_user)
 ):
     doctor_id = user.id
@@ -77,7 +80,21 @@ async def create_patient(
         "past_medical_data": patient.past_medical_data
     }).execute()
 
-    if not res.data:
-        raise HTTPException(status_code=500, detail="Patient creation failed")
+    new_patient = res.data[0]
 
-    return {"success": True, "patient": res.data[0]}
+    # 3️⃣ Log event
+    log_event(
+        level="INFO",
+        action="CREATE_PATIENT",
+        request_id=request.state.request_id,
+        actor_id=user.id,
+        actor_role="doctor",
+        resource_type="patient",
+        resource_id=new_patient["id"],
+        metadata={
+            "first_name": patient.first_name,
+            "last_name": patient.last_name
+        }
+    )
+
+    return {"success": True, "patient": new_patient}
