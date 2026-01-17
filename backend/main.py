@@ -29,7 +29,7 @@ logger = logging.getLogger("uvicorn")
 # FastAPI App
 # ---------------------------
 app = FastAPI(
-    title="ThyroVision Backend",
+    title="ThyroSight Backend",
     description="Backend API for Thyroid Ultrasound Analysis System",
     version=os.getenv("VERSION", "1.0.0")
 )
@@ -97,7 +97,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 async def health_check():
     return {
         "status": "ok",
-        "service": "ThyroVision Backend",
+        "service": "ThyroSight Backend",
         "version": os.getenv("VERSION", "1.0.0")
     }
 
@@ -124,14 +124,14 @@ async def startup_validation():
         render_url = os.getenv("RENDER_EXTERNAL_URL")
 
         logger.info("=================================")
-        logger.info("ThyroVision Backend is running 🚀")
+        logger.info("ThyroSight Backend is running 🚀")
         logger.info("Status  : 200 OK ✅")
-        logger.info("Service : ThyroVision Backend🏥")
+        logger.info("Service : ThyroSight Backend🏥")
         logger.info(f"Version : {version}")
         logger.info(f"URL     : {render_url or f'http://{host}:{port}'}")
         logger.info("=================================")
 
     except Exception as e:
-        logger.error("❌ ThyroVision Backend failed to start")
+        logger.error("❌ ThyroSight Backend failed to start")
         logger.error(str(e))
         raise  # re-raise so Render fails deployment

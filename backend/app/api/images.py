@@ -37,7 +37,7 @@
 
 #     try:
 #         # 4️⃣ Upload to Supabase Storage
-#         supabase.storage.from_("thyrovision-images").upload(
+#         supabase.storage.from_("ThyroSight-images").upload(
 #             file_path,
 #             file_bytes,
 #             {"content-type": file.content_type}
@@ -45,7 +45,7 @@
 
 #         # 5️⃣ Generate signed URL (temporary access)
 #         # Note: In newer supabase-py versions, create_signed_url returns the URL string directly
-#         signed_url = supabase.storage.from_("thyrovision-images").create_signed_url(
+#         signed_url = supabase.storage.from_("ThyroSight-images").create_signed_url(
 #             file_path,
 #             600  # 10 minutes
 #         )
@@ -105,13 +105,13 @@ async def upload_raw_image(
     file_bytes = await file.read()
 
     try:
-        supabase_admin.storage.from_("thyrovision-images").upload(
+        supabase_admin.storage.from_("ThyroSight-images").upload(
             file_path,
             file_bytes,
             {"content-type": file.content_type}
         )
 
-        signed_url = supabase_admin.storage.from_("thyrovision-images") \
+        signed_url = supabase_admin.storage.from_("ThyroSight-images") \
             .create_signed_url(file_path, 3600 * 24 * 7) # 1 week expiration
 
         if isinstance(signed_url, dict):

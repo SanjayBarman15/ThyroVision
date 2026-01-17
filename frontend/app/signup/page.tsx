@@ -16,7 +16,7 @@ const initialState = {
 export default function SignupPage() {
   const [state, formAction, isPending] = useActionState(
     signup,
-    initialState as { error: string | null }
+    initialState as { error: string | null },
   );
 
   // Note: Password match validation is ideally done client-side before submission or handled in server action
@@ -32,7 +32,7 @@ export default function SignupPage() {
             Create Account
           </h1>
           <p className="text-sm text-muted-foreground">
-            Join ThyroVision for AI-assisted analysis
+            Join ThyroSight for AI-assisted analysis
           </p>
         </div>
 

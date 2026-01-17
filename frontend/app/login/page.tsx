@@ -16,7 +16,7 @@ const initialState = {
 export default function LoginPage() {
   const [state, formAction, isPending] = useActionState(
     login,
-    initialState as { error: string | null }
+    initialState as { error: string | null },
   );
 
   return (
@@ -27,7 +27,7 @@ export default function LoginPage() {
             Welcome Back
           </h1>
           <p className="text-sm text-muted-foreground">
-            Login to your ThyroVision account
+            Login to your ThyroSight account
           </p>
         </div>
 

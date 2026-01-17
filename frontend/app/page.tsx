@@ -30,7 +30,7 @@ export default function LandingPage() {
             AI-Assisted Thyroid Ultrasound Analysis
           </h1>
           <p className="mb-8 text-xl text-muted-foreground">
-            ThyroVision provides radiologists with AI-powered classification and
+            ThyroSight provides radiologists with AI-powered classification and
             localization assistance, keeping the doctor in control of every
             clinical decision.
           </p>
@@ -71,7 +71,7 @@ export default function LandingPage() {
       <section className="border-t border-border px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl">
           <h2 className="mb-12 text-center text-3xl font-bold">
-            Why ThyroVision?
+            Why ThyroSight?
           </h2>
           <div className="grid gap-12 md:grid-cols-2">
             <div>
@@ -108,7 +108,7 @@ export default function LandingPage() {
             </div>
             <div>
               <h3 className="mb-4 text-lg font-semibold text-primary">
-                ThyroVision Solutions
+                ThyroSight Solutions
               </h3>
               <ul className="space-y-3">
                 <li className="flex gap-3">
@@ -236,13 +236,13 @@ export default function LandingPage() {
               AI-Assisted, Not AI-Replacing
             </p>
             <p className="text-muted-foreground">
-              ThyroVision is designed as a clinical decision support tool. The
+              ThyroSight is designed as a clinical decision support tool. The
               radiologist retains full authority and responsibility for all
               clinical decisions. Our AI provides evidence-based
               recommendations, but doctors make the final call.
             </p>
             <p className="text-sm text-muted-foreground pt-4">
-              ⚠️ Medical Disclaimer: ThyroVision is a research tool for clinical
+              ⚠️ Medical Disclaimer: ThyroSight is a research tool for clinical
               support purposes only and should not be used as a substitute for
               professional medical judgment.
             </p>
@@ -254,7 +254,7 @@ export default function LandingPage() {
       <footer className="border-t border-border px-4 py-12 sm:px-6 lg:px-8 bg-background/50">
         <div className="mx-auto max-w-4xl flex flex-col items-center justify-between gap-6 md:flex-row">
           <div>
-            <h3 className="font-semibold text-foreground">ThyroVision</h3>
+            <h3 className="font-semibold text-foreground">ThyroSight</h3>
             <p className="text-sm text-muted-foreground">
               AI-Assisted Thyroid Analysis Platform
             </p>

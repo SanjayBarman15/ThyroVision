@@ -95,7 +95,7 @@ export default function DashboardPage() {
         oneDayAgo.setDate(oneDayAgo.getDate() - 1);
 
         const newScans = patientsData.filter(
-          (p) => new Date(p.created_at) > oneDayAgo
+          (p) => new Date(p.created_at) > oneDayAgo,
         ).length;
 
         setStats({
@@ -115,7 +115,7 @@ export default function DashboardPage() {
   }, [fetchDashboardData]);
 
   const [sortBy, setSortBy] = useState<"urgency" | "recent" | "name">(
-    "urgency"
+    "urgency",
   );
 
   // Sorting Logic
@@ -150,7 +150,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <h1 className="text-lg font-bold text-foreground leading-none">
-                ThyroVision
+                ThyroSight
               </h1>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
                 Radiology Suite

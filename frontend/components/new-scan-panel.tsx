@@ -92,12 +92,12 @@ export default function NewScanPanel({
     (
       e: React.ChangeEvent<
         HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-      >
+      >,
     ) => {
       const { name, value } = e.target;
       setFormData((prev) => ({ ...prev, [name]: value }));
     },
-    []
+    [],
   );
 
   const handleFileChange = useCallback((file: File) => {
@@ -139,7 +139,7 @@ export default function NewScanPanel({
       }
       return true;
     },
-    [formData, imageFile]
+    [formData, imageFile],
   );
 
   const handleNext = useCallback(() => {
@@ -214,7 +214,7 @@ export default function NewScanPanel({
         throw new Error(
           `Profile created, but image upload failed: ${
             detail || imageResponse.statusText
-          }`
+          }`,
         );
       }
 
@@ -241,7 +241,7 @@ export default function NewScanPanel({
             ? err.detail
             : JSON.stringify(err.detail);
         throw new Error(
-          `Upload success, but AI analysis failed: ${detail || "Unknown error"}`
+          `Upload success, but AI analysis failed: ${detail || "Unknown error"}`,
         );
       }
 
@@ -304,7 +304,7 @@ export default function NewScanPanel({
               )}
             </h2>
             <p className="text-xs text-muted-foreground uppercase tracking-wider">
-              ThyroVision Intelligent Analysis
+              ThyroSight Intelligent Analysis
             </p>
           </div>
           <button

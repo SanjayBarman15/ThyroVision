@@ -47,7 +47,7 @@ async def run_inference(
     inference = mock_service.run(raw_image["file_path"])
 
     # 3️⃣ Download raw image from storage
-    bucket = supabase_admin.storage.from_("thyrovision-images")
+    bucket = supabase_admin.storage.from_("ThyroSight-images")
     try:
         raw_bytes = bucket.download(raw_image["file_path"])
     except Exception as e:
