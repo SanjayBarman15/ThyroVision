@@ -146,7 +146,7 @@ export default function DashboardPage() {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg bg-primary/20 flex items-center justify-center">
-              <span className="text-primary font-bold">TV</span>
+              <span className="text-primary font-bold">TS</span>
             </div>
             <div>
               <h1 className="text-lg font-bold text-foreground leading-none">
