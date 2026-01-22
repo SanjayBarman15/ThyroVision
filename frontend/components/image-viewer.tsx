@@ -95,11 +95,11 @@ export default function ImageViewer({
 
     const newX = Math.max(
       -maxOffset_X,
-      Math.min(lastPosition.current.x + deltaX, maxOffset_X)
+      Math.min(lastPosition.current.x + deltaX, maxOffset_X),
     );
     const newY = Math.max(
       -maxOffset_Y,
-      Math.min(lastPosition.current.y + deltaY, maxOffset_Y)
+      Math.min(lastPosition.current.y + deltaY, maxOffset_Y),
     );
 
     setPosition({ x: newX, y: newY });
@@ -304,7 +304,7 @@ export default function ImageViewer({
           variant="ghost"
           size="icon"
           onClick={onZoomIn}
-          disabled={zoomLevel >= 3}
+          disabled={zoomLevel >= 4}
           className="h-8 w-8 rounded-full text-zinc-400 hover:text-white hover:bg-white/10 disabled:opacity-30"
         >
           <ZoomIn className="h-4 w-4" />

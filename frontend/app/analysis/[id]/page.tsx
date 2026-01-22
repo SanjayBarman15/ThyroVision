@@ -20,7 +20,7 @@ export default function AnalysisPage({
   const [isLoading, setIsLoading] = useState(true);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [imageMode, setImageMode] = useState<"original" | "processed">(
-    "processed"
+    "processed",
   );
 
   const [patient, setPatient] = useState<any>(null);
@@ -85,8 +85,8 @@ export default function AnalysisPage({
               predData.tirads >= 4
                 ? "high"
                 : predData.tirads >= 3
-                ? "moderate"
-                : "low",
+                  ? "moderate"
+                  : "low",
             explanation: `Mock explanation for TI-RADS ${predData.tirads}. The model version used was ${predData.model_version}. Inference took ${predData.inference_time_ms}ms.`,
             features: predData.features || {
               composition: "N/A",
@@ -127,7 +127,7 @@ export default function AnalysisPage({
               `${backendUrl}/predictions/${predData.id}/feedback`,
               {
                 headers: { Authorization: `Bearer ${token}` },
-              }
+              },
             );
 
             if (feedbackRes.ok) {
@@ -156,7 +156,7 @@ export default function AnalysisPage({
   }, [fetchData]);
 
   const handleZoomIn = () =>
-    setZoomLevel((prev: number) => Math.min(prev + 0.5, 3));
+    setZoomLevel((prev: number) => Math.min(prev + 0.3, 4));
   const handleZoomOut = () =>
     setZoomLevel((prev: number) => Math.max(prev - 0.5, 0.5));
   const handleReset = () => {
