@@ -4,10 +4,15 @@ export type LogLevel = "INFO" | "WARN" | "ERROR" | "FATAL";
 
 export type LogAction =
   | "MODEL_INFERENCE"
-  | "IMAGE_UPLOAD"
-  | "FEEDBACK_SUBMITTED"
-  | "AUTH_EVENT"
-  | "SYSTEM";
+  | "UPLOAD_RAW_IMAGE"
+  | "UPLOAD_IMAGE_ERROR"
+  | "CREATE_PATIENT"
+  | "SUBMIT_FEEDBACK"
+  | "SUBMIT_FEEDBACK_ERROR"
+  | "VALIDATION_ERROR"
+  | "SERVER_ERROR"
+  | "SYSTEM"
+  | "AUTH_EVENT";
 
 export type ActorRole = "doctor" | "radiologist" | "system";
 

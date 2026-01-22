@@ -24,7 +24,7 @@ export function LogLevelBadge({ level, className }: LogLevelBadgeProps) {
       className={cn(
         "px-2 py-0.5 text-[10px] tracking-wider uppercase font-medium rounded-sm",
         variants[level],
-        className
+        className,
       )}
     >
       {level}
@@ -40,10 +40,15 @@ interface ActionBadgeProps {
 export function ActionBadge({ action, className }: ActionBadgeProps) {
   const labels: Record<LogAction, string> = {
     MODEL_INFERENCE: "Model Inference",
-    IMAGE_UPLOAD: "Image Upload",
-    FEEDBACK_SUBMITTED: "Feedback",
-    AUTH_EVENT: "Auth",
+    UPLOAD_RAW_IMAGE: "Image Upload",
+    UPLOAD_IMAGE_ERROR: "Upload Error",
+    CREATE_PATIENT: "Patient Creation",
+    SUBMIT_FEEDBACK: "Feedback",
+    SUBMIT_FEEDBACK_ERROR: "Feedback Error",
+    VALIDATION_ERROR: "Validation",
+    SERVER_ERROR: "System Error",
     SYSTEM: "System",
+    AUTH_EVENT: "Auth",
   };
 
   return (
@@ -51,7 +56,7 @@ export function ActionBadge({ action, className }: ActionBadgeProps) {
       variant="secondary"
       className={cn(
         "bg-slate-100 text-slate-600 hover:bg-slate-200 border-slate-200 text-[11px] font-normal rounded-full px-2.5",
-        className
+        className,
       )}
     >
       {labels[action]}

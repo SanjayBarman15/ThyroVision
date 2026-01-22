@@ -77,7 +77,7 @@
 from app.db.auth import verify_user
 from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, Request
 from app.utils.logger import log_event
-from app.db.supabase import supabase_admin
+from app.db.supabase import supabase_admin, STORAGE_BUCKET
 import uuid
 
 router = APIRouter(prefix="/images", tags=["Images"])
@@ -105,19 +105,20 @@ async def upload_raw_image(
     file_bytes = await file.read()
 
     try:
-        supabase_admin.storage.from_("ThyroSight-images").upload(
+        supabase_admin.storage.from_(STORAGE_BUCKET).upload(
             file_path,
             file_bytes,
             {"content-type": file.content_type}
         )
 
-        signed_url = supabase_admin.storage.from_("ThyroSight-images") \
+        signed_url = supabase_admin.storage.from_(STORAGE_BUCKET) \
             .create_signed_url(file_path, 3600 * 24 * 7) # 1 week expiration
 
         if isinstance(signed_url, dict):
             signed_url = signed_url.get("signedURL") or signed_url.get("signed_url")
 
     except Exception as e:
+        error_msg = str(e)
         log_event(
             level="ERROR",
             action="UPLOAD_IMAGE_ERROR",
@@ -126,9 +127,9 @@ async def upload_raw_image(
             actor_role="doctor",
             resource_type="patient",
             resource_id=patient_id,
-            error_message=str(e)
+            error_message=error_msg
         )
-        raise HTTPException(status_code=500, detail="Storage failed")
+        raise HTTPException(status_code=500, detail=f"Storage failed: {error_msg}")
 
     supabase_admin.table("raw_images").insert({
         "id": image_id,

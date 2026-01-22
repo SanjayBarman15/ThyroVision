@@ -32,3 +32,6 @@ supabase_auth = create_client(SUPABASE_URL, ANON_KEY)
 # 🔑 Used for DB + storage + ML
 supabase_admin = create_client(SUPABASE_URL, SERVICE_KEY)
 
+# 📦 Storage Constants
+STORAGE_BUCKET = os.getenv("SUPABASE_STORAGE_BUCKET", "thyrovision-images")
+

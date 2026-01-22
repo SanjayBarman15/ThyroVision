@@ -39,6 +39,31 @@ interface LogsTableProps {
   onPageChange: (page: number) => void;
 }
 
+const getLogMessage = (log: SystemLog): string => {
+  if (log.message) return log.message;
+
+  switch (log.action) {
+    case "MODEL_INFERENCE":
+      return `AI prediction generated (TI-RADS: ${log.metadata?.tirads || "N/A"})`;
+    case "UPLOAD_RAW_IMAGE":
+      return "Scan image uploaded successfully";
+    case "UPLOAD_IMAGE_ERROR":
+      return `Failed to upload scan image: ${log.error_message || "Unknown error"}`;
+    case "CREATE_PATIENT":
+      return `New patient profile created: ${log.metadata?.first_name} ${log.metadata?.last_name}`;
+    case "SUBMIT_FEEDBACK":
+      return `Doctor provided feedback (Correct: ${log.metadata?.is_correct ? "Yes" : "No"})`;
+    case "SUBMIT_FEEDBACK_ERROR":
+      return `Failed to save feedback: ${log.error_message || "Unknown error"}`;
+    case "VALIDATION_ERROR":
+      return "Input validation failed for request";
+    case "SERVER_ERROR":
+      return log.error_message || "Internal server error occurred";
+    default:
+      return log.action.replace(/_/g, " ").toLowerCase();
+  }
+};
+
 export function LogsTable({
   logs,
   onRowClick,
@@ -125,7 +150,7 @@ export function LogsTable({
                   <TableCell>
                     <div className="max-w-[400px] flex flex-col gap-0.5">
                       <p className="text-sm text-foreground font-medium truncate group-hover:text-primary transition-colors">
-                        {log.message}
+                        {log.message || getLogMessage(log)}
                       </p>
                       {log.resource_id && (
                         <div className="flex items-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">

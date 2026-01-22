@@ -2,7 +2,7 @@ import os
 import logging
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -89,6 +89,13 @@ async def global_exception_handler(request: Request, exc: Exception):
         metadata={"type": type(exc).__name__},
     )
     return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
+
+# ---------------------------
+# Favicon
+# ---------------------------
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse("favicon.ico")
 
 # ---------------------------
 # Health Check

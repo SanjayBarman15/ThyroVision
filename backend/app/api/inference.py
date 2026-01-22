@@ -3,7 +3,7 @@
 from app.db.auth import verify_user
 from fastapi import APIRouter, Depends, HTTPException, Body, Request
 from app.utils.logger import log_event
-from app.db.supabase import supabase_admin
+from app.db.supabase import supabase_admin, STORAGE_BUCKET
 from app.services.mock_inference import MockInferenceService
 from PIL import Image
 import uuid
@@ -47,7 +47,7 @@ async def run_inference(
     inference = mock_service.run(raw_image["file_path"])
 
     # 3️⃣ Download raw image from storage
-    bucket = supabase_admin.storage.from_("ThyroSight-images")
+    bucket = supabase_admin.storage.from_(STORAGE_BUCKET)
     try:
         raw_bytes = bucket.download(raw_image["file_path"])
     except Exception as e:
@@ -77,7 +77,7 @@ async def run_inference(
         )
     except Exception as e:
         if "already exists" not in str(e).lower():
-            raise HTTPException(status_code=500, detail=f"Storage upload failed: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Processed storage upload failed: {str(e)}")
 
     # 6.5️⃣ Generate signed URL for processed image
     try:
