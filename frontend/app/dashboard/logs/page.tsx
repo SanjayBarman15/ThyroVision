@@ -26,7 +26,7 @@ export default function SystemLogsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isConfigLoading, setIsConfigLoading] = useState(true);
   const [isLoggingEnabled, setIsLoggingEnabled] = useState<boolean | null>(
-    null
+    null,
   );
   const [selectedLog, setSelectedLog] = useState<SystemLog | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -40,7 +40,9 @@ export default function SystemLogsPage() {
   useEffect(() => {
     async function init() {
       try {
-        const configRes = await fetch("http://localhost:8000/api/logs/config");
+        const backendUrl =
+          process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+        const configRes = await fetch(`${backendUrl}/api/logs/config`);
         const configData = await configRes.json();
         setIsLoggingEnabled(configData.logging_enabled);
         setIsConfigLoading(false);
@@ -75,8 +77,10 @@ export default function SystemLogsPage() {
         queryParams.append("action", currentFilters.action);
       // Backend search is not yet implemented for all fields, we'll keep frontend filtering for now if needed or implement backend search later
 
+      const backendUrl =
+        process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
       const response = await fetch(
-        `http://localhost:8000/api/logs?${queryParams.toString()}`
+        `${backendUrl}/api/logs?${queryParams.toString()}`,
       );
       const data = await response.json();
 
@@ -259,7 +263,7 @@ export default function SystemLogsPage() {
                   </p>
                 </div>
               </div>
-            )
+            ),
         )}
       </div>
 
