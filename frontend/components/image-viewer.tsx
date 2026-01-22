@@ -19,6 +19,7 @@ interface ImageViewerProps {
   onZoomOut: () => void;
   onReset: () => void;
   onModeChange: (mode: "original" | "processed") => void;
+  onZoomScale?: (delta: number) => void;
 }
 
 export default function ImageViewer({
@@ -30,6 +31,7 @@ export default function ImageViewer({
   onZoomOut,
   onReset,
   onModeChange,
+  onZoomScale,
 }: ImageViewerProps) {
   const [isLoading, setIsLoading] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -110,21 +112,56 @@ export default function ImageViewer({
     lastPosition.current = { ...position };
   };
 
-  const handleWheel = (e: React.WheelEvent) => {
-    // Optional: Add wheel zoom support if desired, or keep generic scroll
-    e.preventDefault();
-    if (e.deltaY < 0) {
-      onZoomIn();
-    } else {
-      onZoomOut();
-    }
-  };
+  // Use a native non-passive listener to prevent browser-level zoom/scroll interference
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const onWheel = (e: WheelEvent) => {
+      // ALWAYS prevent default to stop browser zoom/scroll
+      e.preventDefault();
+
+      if (onZoomScale) {
+        // Sensitivity of 0.010 as per user's preference
+        const sensitivity = 0.009;
+        const delta = -e.deltaY * sensitivity;
+        onZoomScale(delta);
+      } else {
+        if (e.deltaY < 0) {
+          onZoomIn();
+        } else {
+          onZoomOut();
+        }
+      }
+    };
+
+    // Prevent Safari/Mac trackpad gestures
+    const onGesture = (e: Event) => {
+      e.preventDefault();
+    };
+
+    container.addEventListener("wheel", onWheel, {
+      passive: false,
+      capture: true,
+    });
+    container.addEventListener("gesturestart", onGesture, { passive: false });
+    container.addEventListener("gesturechange", onGesture, { passive: false });
+
+    return () => {
+      container.removeEventListener("wheel", onWheel, { capture: true } as any);
+      container.removeEventListener("gesturestart", onGesture);
+      container.removeEventListener("gesturechange", onGesture);
+    };
+  }, [onZoomScale, onZoomIn, onZoomOut]);
 
   return (
-    <div className="flex flex-col h-full bg-black relative group overflow-hidden select-none">
+    <div
+      ref={containerRef}
+      className="flex flex-col h-full bg-black relative group overflow-hidden select-none touch-none"
+      style={{ overscrollBehavior: "none" }}
+    >
       {/* Viewport Container */}
       <div
-        ref={containerRef}
         className={`flex-1 relative w-full h-full overflow-hidden outline-none ${
           zoomLevel > 1
             ? "cursor-grab active:cursor-grabbing"
@@ -134,7 +171,6 @@ export default function ImageViewer({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        onWheel={handleWheel}
       >
         {/* Background Grid (Medical Style) */}
         <div

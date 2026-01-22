@@ -155,14 +155,26 @@ export default function AnalysisPage({
     fetchData();
   }, [fetchData]);
 
-  const handleZoomIn = () =>
-    setZoomLevel((prev: number) => Math.min(prev + 0.3, 4));
-  const handleZoomOut = () =>
-    setZoomLevel((prev: number) => Math.max(prev - 0.5, 0.5));
-  const handleReset = () => {
+  const handleZoomIn = useCallback(
+    () => setZoomLevel((prev: number) => Math.min(prev + 0.3, 4)),
+    [],
+  );
+  const handleZoomOut = useCallback(
+    () => setZoomLevel((prev: number) => Math.max(prev - 0.5, 0.5)),
+    [],
+  );
+  const handleZoomScale = useCallback(
+    (delta: number) =>
+      setZoomLevel((prev: number) => {
+        const newZoom = prev + delta;
+        return Math.min(Math.max(newZoom, 0.5), 4);
+      }),
+    [],
+  );
+  const handleReset = useCallback(() => {
     setZoomLevel(1);
     setImageMode("original");
-  };
+  }, []);
 
   if (isLoading) {
     return (
@@ -222,6 +234,7 @@ export default function AnalysisPage({
               onZoomOut={handleZoomOut}
               onReset={handleReset}
               onModeChange={setImageMode}
+              onZoomScale={handleZoomScale}
               // Pass real image URLs
               imageUrl={currentImageUrl}
               boundingBox={analysis?.boundingBox}
