@@ -130,13 +130,14 @@ async def startup_validation():
         version = os.getenv("VERSION", "1.0.0")
         render_url = os.getenv("RENDER_EXTERNAL_URL")
 
-        logger.info("=================================")
-        logger.info("ThyroSight Backend is running 🚀")
+        logger.info("--------------------------------")
+        logger.info("ThyroSight Backend is running🚀")
         logger.info("Status  : 200 OK ✅")
         logger.info("Service : ThyroSight Backend🏥")
         logger.info(f"Version : {version}")
         logger.info(f"URL     : {render_url or f'http://{host}:{port}'}")
-        logger.info("=================================")
+        logger.info("________________________________")
+        logger.info("********************************")
 
     except Exception as e:
         logger.error("❌ ThyroSight Backend failed to start")

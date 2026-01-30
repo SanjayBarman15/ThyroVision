@@ -1,23 +1,20 @@
 # backend/app/api/inference.py
 
-from app.db.auth import verify_user
 from fastapi import APIRouter, Depends, HTTPException, Body, Request
-from app.utils.logger import log_event
-from app.db.supabase import supabase_admin, STORAGE_BUCKET
-from app.services.mock_inference import MockInferenceService
 from PIL import Image
 import uuid
 import io
+
+from app.db.auth import verify_user
+from app.db.supabase import supabase_admin, STORAGE_BUCKET
+from app.services.mock_inference import MockInferenceService
+from app.utils.logger import log_event
 
 router = APIRouter(prefix="/inference", tags=["Inference"])
 mock_service = MockInferenceService()
 
 
 def convert_to_grayscale(image_bytes: bytes) -> bytes:
-    """
-    Converts an image to grayscale using Pillow.
-    This is REAL processing, not fake ML.
-    """
     img = Image.open(io.BytesIO(image_bytes))
     gray = img.convert("L")
 
@@ -32,32 +29,40 @@ async def run_inference(
     image_id: str = Body(..., embed=True),
     user=Depends(verify_user)
 ):
-    # 1️⃣ Fetch raw image
-    res = supabase_admin.table("raw_images") \
-        .select("*") \
-        .eq("id", image_id) \
-        .single() \
+    # 1️⃣ Fetch raw image record
+    res = (
+        supabase_admin.table("raw_images")
+        .select("*")
+        .eq("id", image_id)
+        .single()
         .execute()
+    )
 
     raw_image = res.data
     if not raw_image:
         raise HTTPException(status_code=404, detail="Raw image not found")
 
-    # 2️⃣ Run mock inference
-    inference = mock_service.run(raw_image["file_path"])
-
-    # 3️⃣ Download raw image from storage
+    # 2️⃣ Download raw image bytes from Supabase Storage
     bucket = supabase_admin.storage.from_(STORAGE_BUCKET)
     try:
         raw_bytes = bucket.download(raw_image["file_path"])
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to download image: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to download image: {str(e)}"
+        )
 
-    # 4️⃣ Convert to grayscale (processed image)
+    # 3️⃣ Run inference on IMAGE BYTES (✅ correct)
+    inference = mock_service.run(raw_bytes)
+
+    # 4️⃣ OPTIONAL preprocessing (grayscale)
     try:
         processed_bytes = convert_to_grayscale(raw_bytes)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Preprocessing failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Preprocessing failed: {str(e)}"
+        )
 
     # 5️⃣ Build processed image path
     processed_path = (
@@ -68,7 +73,7 @@ async def run_inference(
         f"image_{image_id}.jpg"
     )
 
-    # 6️⃣ Upload processed image
+    # 6️⃣ Upload processed image (optional – you may remove later)
     try:
         bucket.upload(
             processed_path,
@@ -77,15 +82,18 @@ async def run_inference(
         )
     except Exception as e:
         if "already exists" not in str(e).lower():
-            raise HTTPException(status_code=500, detail=f"Processed storage upload failed: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Processed storage upload failed: {str(e)}"
+            )
 
-    # 6.5️⃣ Generate signed URL for processed image
+    # 6.5️⃣ Signed URL
     try:
-        signed_url = bucket.create_signed_url(processed_path, 3600 * 24 * 7) # 1 week
+        signed_url = bucket.create_signed_url(processed_path, 3600 * 24 * 7)
         if isinstance(signed_url, dict):
             signed_url = signed_url.get("signedURL") or signed_url.get("signed_url")
     except Exception:
-        signed_url = processed_path # Fallback
+        signed_url = processed_path
 
     # 7️⃣ Insert processed_images record
     processed_image_id = str(uuid.uuid4())
@@ -97,7 +105,7 @@ async def run_inference(
     }).execute()
 
     if not proc_res.data:
-        raise HTTPException(status_code=500, detail="Failed to save processed image record")
+        raise HTTPException(status_code=500, detail="Failed to save processed image")
 
     # 8️⃣ Insert prediction
     pred_res = supabase_admin.table("predictions").insert({
@@ -107,14 +115,14 @@ async def run_inference(
         "confidence": inference["confidence"],
         "model_version": inference["model_version"],
         "inference_time_ms": inference["inference_time_ms"],
-        "features": inference["features"],  # Save dynamic features
-        "bounding_box": inference["bounding_box"], # Save detection ROI
+        "features": inference["features"],
+        "bounding_box": inference["bounding_box"],
         "processed_image_id": processed_image_id,
         "training_candidate": False
     }).execute()
 
     if not pred_res.data:
-        raise HTTPException(status_code=500, detail="Failed to save prediction record")
+        raise HTTPException(status_code=500, detail="Failed to save prediction")
 
     prediction = pred_res.data[0]
 

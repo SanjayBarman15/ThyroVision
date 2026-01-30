@@ -190,12 +190,12 @@ export default function AnalysisPage({
 
   if (!patient) return <div>Patient not found</div>;
 
-  const currentImageUrl =
-    imageMode === "original"
-      ? rawImage?.file_url
-      : processedImage?.file_url || rawImage?.file_url;
+  const currentImageUrl = rawImage?.file_url;
 
-  console.log(`🖼️ ImageViewer Mode: ${imageMode} | URL:`, currentImageUrl);
+  console.log(
+    `🖼️ ImageViewer Mode: ${imageMode} | Base Image:`,
+    currentImageUrl,
+  );
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden font-sans">

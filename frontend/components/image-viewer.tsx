@@ -5,16 +5,22 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 
+interface BoundingBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  image_width: number;
+  image_height: number;
+  format?: string;
+  coordinate_space?: string;
+}
+
 interface ImageViewerProps {
   zoomLevel: number;
   imageMode: "original" | "processed";
   imageUrl?: string;
-  boundingBox?: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  };
+  boundingBox?: BoundingBox;
   onZoomIn: () => void;
   onZoomOut: () => void;
   onReset: () => void;
@@ -244,20 +250,19 @@ export default function ImageViewer({
               </div>
             </div>
 
-            {/* AI Overlays - Dynamic ROI */}
+            {/* AI Overlays - Bounding Box Overlay */}
             {imageMode === "processed" && boundingBox && (
-              <div className="absolute inset-0 pointer-events-none">
-                {/* Dynamic detection box */}
+              <div className="absolute inset-0 pointer-events-none z-20">
                 <div
-                  className="absolute border-2 border-emerald-500/80 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.3)] animate-pulse backdrop-blur-[0.5px]"
+                  className="absolute border-2 border-emerald-500/80 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.3)] backdrop-blur-[0.5px]"
                   style={{
-                    left: `${boundingBox.x}px`,
-                    top: `${boundingBox.y}px`,
-                    width: `${boundingBox.width}px`,
-                    height: `${boundingBox.height}px`,
+                    left: `${(boundingBox.x / boundingBox.image_width) * 100}%`,
+                    top: `${(boundingBox.y / boundingBox.image_height) * 100}%`,
+                    width: `${(boundingBox.width / boundingBox.image_width) * 100}%`,
+                    height: `${(boundingBox.height / boundingBox.image_height) * 100}%`,
                   }}
                 >
-                  <div className="absolute -top-6 left-0 bg-emerald-900/90 text-emerald-400 text-[10px] font-bold px-2 py-0.5 border border-emerald-500/40 rounded-sm">
+                  <div className="absolute -top-6 left-0 bg-emerald-900/90 text-emerald-400 text-[10px] font-bold px-2 py-0.5 border border-emerald-500/40 rounded-sm whitespace-nowrap">
                     TI-RADS DETECTED
                   </div>
                 </div>
