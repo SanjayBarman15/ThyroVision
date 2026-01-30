@@ -7,11 +7,11 @@ import io
 
 from app.db.auth import verify_user
 from app.db.supabase import supabase_admin, STORAGE_BUCKET
-from app.services.mock_inference import MockInferenceService
+from app.services.inference.pipeline import InferencePipeline
 from app.utils.logger import log_event
 
 router = APIRouter(prefix="/inference", tags=["Inference"])
-mock_service = MockInferenceService()
+pipeline = InferencePipeline()
 
 
 def convert_to_grayscale(image_bytes: bytes) -> bytes:
@@ -52,8 +52,8 @@ async def run_inference(
             detail=f"Failed to download image: {str(e)}"
         )
 
-    # 3️⃣ Run inference on IMAGE BYTES (✅ correct)
-    inference = mock_service.run(raw_bytes)
+    # 3️⃣ Run inference on IMAGE BYTES (modular pipeline)
+    inference = pipeline.run(raw_bytes)
 
     # 4️⃣ OPTIONAL preprocessing (grayscale)
     try:
@@ -66,7 +66,7 @@ async def run_inference(
 
     # 5️⃣ Build processed image path
     processed_path = (
-        f"processed/{mock_service.MODEL_VERSION}/"
+        f"processed/{inference['pipeline_version']}/"
         f"class-{inference['tirads']}/"
         f"doctor_{raw_image['doctor_id']}/"
         f"patient_{raw_image['patient_id']}/"
@@ -107,13 +107,14 @@ async def run_inference(
     if not proc_res.data:
         raise HTTPException(status_code=500, detail="Failed to save processed image")
 
-    # 8️⃣ Insert prediction
+    # 8️⃣ Insert prediction with metadata
     pred_res = supabase_admin.table("predictions").insert({
         "raw_image_id": image_id,
         "predicted_class": inference["predicted_class"],
         "tirads": inference["tirads"],
         "confidence": inference["confidence"],
-        "model_version": inference["model_version"],
+        "model_version": inference["pipeline_version"],
+        "model_metadata": inference["models"],
         "inference_time_ms": inference["inference_time_ms"],
         "features": inference["features"],
         "bounding_box": inference["bounding_box"],

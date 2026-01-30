@@ -55,31 +55,59 @@ CREATE TABLE processed_images (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- -- ============================
+-- -- 4. Predictions Table
+-- -- ============================
+-- CREATE TABLE predictions (
+--     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+--     raw_image_id UUID NOT NULL
+--         REFERENCES raw_images(id) ON DELETE CASCADE,
+
+--     predicted_class INT NOT NULL,
+--     tirads INT NOT NULL CHECK (tirads BETWEEN 1 AND 5),
+--     confidence FLOAT NOT NULL CHECK (confidence BETWEEN 0 AND 1),
+
+--     model_version TEXT NOT NULL,
+--     training_candidate BOOLEAN DEFAULT FALSE,
+
+--     inference_time_ms INT CHECK (inference_time_ms >= 0),
+--     features JSONB, -- Added for dynamic AI explanation features
+--     bounding_box JSONB, -- Added for dynamic ROI display
+
+--     processed_image_id UUID
+--         REFERENCES processed_images(id),
+
+--     created_at TIMESTAMP DEFAULT NOW()
+-- );
+
+
 -- ============================
--- 4. Predictions Table
+-- 4. Predictions
 -- ============================
 CREATE TABLE predictions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
     raw_image_id UUID NOT NULL
-        REFERENCES raw_images(id) ON DELETE CASCADE,
-
-    predicted_class INT NOT NULL,
-    tirads INT NOT NULL CHECK (tirads BETWEEN 1 AND 5),
-    confidence FLOAT NOT NULL CHECK (confidence BETWEEN 0 AND 1),
-
-    model_version TEXT NOT NULL,
-    training_candidate BOOLEAN DEFAULT FALSE,
-
-    inference_time_ms INT CHECK (inference_time_ms >= 0),
-    features JSONB, -- Added for dynamic AI explanation features
-    bounding_box JSONB, -- Added for dynamic ROI display
+        REFERENCES raw_images(id)
+        ON DELETE CASCADE,
 
     processed_image_id UUID
         REFERENCES processed_images(id),
 
+    predicted_class INT NOT NULL,
+    tirads INT NOT NULL CHECK (tirads BETWEEN 1 AND 5),
+    confidence FLOAT NOT NULL CHECK (confidence BETWEEN 0 AND 1),
+    model_version TEXT NOT NULL,           -- Pipeline version (e.g. pipeline-v1)
+    model_metadata JSONB NOT NULL,          -- ROI + classifier + rule engine versions
+    features JSONB,                         -- ML-extracted features
+    bounding_box JSONB,                     -- ROI (xywh, raw image space)
+    inference_time_ms INT CHECK (inference_time_ms >= 0),
+    processed_image_id UUID
+        REFERENCES processed_images(id),
+    training_candidate BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT NOW()
 );
+
 
 -- ============================
 -- 5. Prediction Feedback Table
