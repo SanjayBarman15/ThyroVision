@@ -7,7 +7,7 @@ import io
 
 from app.db.auth import verify_user
 from app.db.supabase import supabase_admin, STORAGE_BUCKET
-from app.services.inference.pipeline import InferencePipeline
+from app.services.inference.inference_pipeline import InferencePipeline
 from app.utils.logger import log_event
 
 router = APIRouter(prefix="/inference", tags=["Inference"])
