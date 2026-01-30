@@ -68,3 +68,81 @@ USING (false);
 
 
 ➡️ Only backend (service role) can insert/export.
+
+
+roi_detector.py        -> model 1
+feature_classifier.py  -> model 2
+tirads.py              -> rule engine
+pipeline.py            -> orchestration
+
+
+
+def calculate_acr_tirads(
+    composition,
+    echogenicity,
+    shape,
+    margin,
+    echogenic_foci
+):
+    score = 0
+
+    # Composition
+    composition_points = {
+        "cystic": 0,
+        "spongiform": 0,
+        "mixed": 1,
+        "solid": 2
+    }
+
+    # Echogenicity
+    echogenicity_points = {
+        "anechoic": 0,
+        "hyperechoic": 1,
+        "isoechoic": 1,
+        "hypoechoic": 2,
+        "very_hypoechoic": 3
+    }
+
+    # Shape
+    shape_points = {
+        "wider_than_tall": 0,
+        "taller_than_wide": 3
+    }
+
+    # Margin
+    margin_points = {
+        "smooth": 0,
+        "ill_defined": 0,
+        "lobulated": 2,
+        "irregular": 2,
+        "extrathyroidal_extension": 3
+    }
+
+    # Echogenic foci
+    echogenic_foci_points = {
+        "none": 0,
+        "comet_tail": 0,
+        "macrocalcification": 1,
+        "rim_calcification": 2,
+        "punctate": 3
+    }
+
+    score += composition_points.get(composition, 0)
+    score += echogenicity_points.get(echogenicity, 0)
+    score += shape_points.get(shape, 0)
+    score += margin_points.get(margin, 0)
+    score += echogenic_foci_points.get(echogenic_foci, 0)
+
+    # TI-RADS Category
+    if score == 0:
+        category = "TR1 (Benign)"
+    elif score <= 2:
+        category = "TR2 (Not Suspicious)"
+    elif score == 3:
+        category = "TR3 (Mildly Suspicious)"
+    elif score <= 6:
+        category = "TR4 (Moderately Suspicious)"
+    else:
+        category = "TR5 (Highly Suspicious)"
+
+    return score, category

@@ -118,23 +118,34 @@ project/
 - **Framework:** FastAPI
 - **Deployment:** Docker container on Render
 
-### 4.2 Folder Structure
-
 ```
 backend/
 ├── app/
-│   ├── api/                 # FastAPI route definitions
-│   ├── services/            # ML logic
-│   │   ├── preprocessing.py
-│   │   ├── inference.py
-│   │   └── explainability.py
-│   ├── models/              # Model configuration
-│   └── db/                  # Supabase integration
-├── models/
-│   └── thyroid_resnet_v1/
-│       ├── model.pt
-│       ├── config.json
-│       └── metrics.json
+│   ├── api/                      # API routes
+│   │   ├── __init__.py        
+│   │   ├── patients.py           # Patient routes
+│   │   ├── images.py             # Image routes
+│   │   ├── inference.py          # Inference routes
+│   │   ├── logs.py               # Log routes
+│   │   └── feedback.py           # Feedback routes
+│   ├── services/                 # Services
+│   |    ├── inference/           # Inference services
+│   |    |   ├── roi_detector.py        # Faster R-CNN (mock now)
+│   |    |   ├── feature_classifier.py  # Xception (mock now)
+│   |    |   └── pipeline.py            # orchestration
+│   |    ├── rules/               # Rule services
+│   |    |   └── tirads.py              # PURE rule engine
+│   |    ├── preprocessing.py      #Empty for now
+│   |    ├── explainability.py     #Empty for now
+│   |    └── config/              # Model configuration
+|   ├── middleware/               # Middleware
+|   |   └── request_id.py         # Request ID middleware
+│   ├── db/                       # Supabase integration
+|   |   ├── auth.py               # Authentication functions
+|   |   └── supabase.py           # Supabase client
+|   └── utils/                    # Utility functions
+|       └── logger.py             # Logger
+├── models/                       # Saved Models
 ├── main.py
 ├── Dockerfile
 ├── requirements.txt
