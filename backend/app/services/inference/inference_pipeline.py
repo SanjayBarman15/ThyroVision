@@ -11,6 +11,7 @@ from app.services.inference.roi_detector import MockROIDetector
 from app.services.inference.feature_classifier import MockFeatureClassifier
 from app.services.rules.tirads import calculate_tirads
 from app.services.inference.box_utils import xyxy_to_xywh
+from app.services.explainability.response_generator import ResponseGenerator
 
 
 class InferencePipeline:
@@ -32,7 +33,7 @@ class InferencePipeline:
         self.roi_detector = MockROIDetector()
         self.feature_classifier = MockFeatureClassifier()
 
-    def run(self, image_bytes: bytes) -> Dict:
+    async def run(self, image_bytes: bytes) -> Dict:
         start_time = time.time()
 
         # ─────────────────────────────────────────────
@@ -86,7 +87,16 @@ class InferencePipeline:
         tirads_result = calculate_tirads(features)
 
         # ─────────────────────────────────────────────
-        # 7️⃣ Final response
+        # 8️⃣ AI Explanation (Gemini)
+        # ─────────────────────────────────────────────
+        ai_result = await ResponseGenerator.generate(
+            features=features,
+            tirads=tirads_result["tirads"],
+            confidence=tirads_result["confidence"]
+        )
+
+        # ─────────────────────────────────────────────
+        # 9️⃣ Final response
         # ─────────────────────────────────────────────
         inference_time_ms = int((time.time() - start_time) * 1000)
 
@@ -97,11 +107,15 @@ class InferencePipeline:
 
             "features": features,
             "bounding_box": bounding_box,
+            
+            "ai_explanation": ai_result["ai_explanation"],
+            "explanation_metadata": ai_result["explanation_metadata"],
 
             "models": {
                 "roi_detector": roi_result["detector"],
                 "feature_classifier": feature_result["classifier"],
                 "rule_engine": tirads_result["rule_engine"],
+                "explainer": ai_result["explanation_metadata"]["engine"]
             },
 
             "pipeline_version": self.PIPELINE_VERSION,

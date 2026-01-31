@@ -53,7 +53,7 @@ async def run_inference(
         )
 
     # 3️⃣ Run inference on IMAGE BYTES (modular pipeline)
-    inference = pipeline.run(raw_bytes)
+    inference = await pipeline.run(raw_bytes)
 
     # 4️⃣ OPTIONAL preprocessing (grayscale)
     try:
@@ -119,7 +119,9 @@ async def run_inference(
         "features": inference["features"],
         "bounding_box": inference["bounding_box"],
         "processed_image_id": processed_image_id,
-        "training_candidate": False
+        "training_candidate": False,
+        "ai_explanation": inference.get("ai_explanation"),
+        "explanation_metadata": inference.get("explanation_metadata")
     }).execute()
 
     if not pred_res.data:

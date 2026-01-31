@@ -8,6 +8,8 @@ interface ExplanationAccordionProps {
   analysis: {
     explanation: string;
     features: Record<string, string>;
+    modelVersion?: string;
+    inferenceTime?: number;
   };
 }
 
@@ -15,6 +17,8 @@ export default function ExplanationAccordion({
   analysis,
 }: ExplanationAccordionProps) {
   const [isOpen, setIsOpen] = useState(true);
+  const showTechnicalDetails =
+    process.env.NEXT_PUBLIC_AI_SHOW_TECHNICAL_DETAILS === "true";
 
   return (
     <Card className="border-border bg-card overflow-hidden">
@@ -60,6 +64,14 @@ export default function ExplanationAccordion({
               ))}
             </div>
           </div>
+
+          {showTechnicalDetails &&
+            (analysis.modelVersion || analysis.inferenceTime) && (
+              <div className="pt-3 mt-2 border-t border-border/40 flex justify-between items-center text-[9px] text-muted-foreground/60 font-mono italic">
+                <span>Engine: {analysis.modelVersion}</span>
+                <span>Speed: {analysis.inferenceTime}ms</span>
+              </div>
+            )}
         </div>
       )}
     </Card>

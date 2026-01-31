@@ -87,7 +87,9 @@ export default function AnalysisPage({
                 : predData.tirads >= 3
                   ? "moderate"
                   : "low",
-            explanation: `Mock explanation for TI-RADS ${predData.tirads}. The model version used was ${predData.model_version}. Inference took ${predData.inference_time_ms}ms.`,
+            explanation:
+              predData.ai_explanation ||
+              `Nodule analysis complete. TI-RADS ${predData.tirads} assigned.`,
             features: predData.features || {
               composition: "N/A",
               echogenicity: "N/A",
@@ -97,6 +99,8 @@ export default function AnalysisPage({
             },
             boundingBox: predData.bounding_box,
             predictionId: predData.id,
+            modelVersion: predData.model_version,
+            inferenceTime: predData.inference_time_ms,
           });
         }
 
