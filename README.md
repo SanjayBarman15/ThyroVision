@@ -136,7 +136,10 @@ backend/
 │   |    ├── rules/               # Rule services
 │   |    |   └── tirads.py              # PURE rule engine
 │   |    ├── preprocessing.py      #Empty for now
-│   |    ├── explainability.py     #Empty for now
+│   |    ├── explainability/      # Explainability services 
+│   |    |   ├── llm_client.py          # LLM client 
+│   |    |   ├── prompt_templates.py    # Prompt templates 
+│   |    |   └── response_generator.py  # Response generator
 │   |    └── config/              # Model configuration
 |   ├── middleware/               # Middleware
 |   |   └── request_id.py         # Request ID middleware
