@@ -1,4 +1,4 @@
-DATABASE SCHEMA FOR MEDICAL IMAGE ANALYSIS 
+SUPABASE SCHEMA FOR ThyroVision
 -- ============================
 -- 1. Doctors Table
 -- ============================
@@ -102,9 +102,12 @@ CREATE TABLE predictions (
     features JSONB,                         -- ML-extracted features
     bounding_box JSONB,                     -- ROI (xywh, raw image space)
     inference_time_ms INT CHECK (inference_time_ms >= 0),
-    processed_image_id UUID
-        REFERENCES processed_images(id),
+
     training_candidate BOOLEAN DEFAULT FALSE,
+
+    ai_explanation TEXT,
+    explanation_metadata JSONB,
+
     created_at TIMESTAMP DEFAULT NOW()
 );
 
