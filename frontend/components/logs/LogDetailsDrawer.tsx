@@ -64,6 +64,7 @@ export function LogDetailsDrawer({
                     "INFERENCE_OK",
                     "EXPLANATION_OK",
                     "FEEDBACK_OK",
+                    "EXPORT_PDF_OK",
                   ].includes(log.error_code) ? (
                     <div className="flex items-center gap-1.5 text-xs text-rose-600 bg-rose-50 px-2 py-1 rounded-full border border-rose-100 font-bold uppercase tracking-tight">
                       <XCircle className="h-3.5 w-3.5" />

@@ -48,6 +48,8 @@ export function ActionBadge({ action, className }: ActionBadgeProps) {
     VALIDATION_ERROR: "Validation",
     SERVER_ERROR: "System Error",
     GENERATE_EXPLANATION: "AI Explanation",
+    EXPORT_PDF: "PDF Export",
+    EXPORT_PDF_ERROR: "Export Error",
     SYSTEM: "System",
     AUTH_EVENT: "Auth",
   };

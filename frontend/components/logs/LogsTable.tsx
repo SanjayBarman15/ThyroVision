@@ -182,6 +182,7 @@ export function LogsTable({
                         "INFERENCE_OK",
                         "EXPLANATION_OK",
                         "FEEDBACK_OK",
+                        "EXPORT_PDF_OK",
                       ].includes(log.error_code) ? (
                         <>
                           <XCircle className="h-4 w-4 text-destructive" />
