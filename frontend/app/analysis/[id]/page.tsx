@@ -203,7 +203,11 @@ export default function AnalysisPage({
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden font-sans">
-      <Header patientName={patient.name} scanDate={patient.scanDate} />
+      <Header
+        patientName={patient.name}
+        scanDate={patient.scanDate}
+        predictionId={analysis?.predictionId}
+      />
 
       <main className="flex-1 overflow-hidden relative">
         <SplitPane>

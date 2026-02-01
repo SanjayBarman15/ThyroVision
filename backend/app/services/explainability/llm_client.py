@@ -1,24 +1,21 @@
 # LLM client
 
 import os
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from app.services.explainability.prompt_templates import EXPLAINER_SYSTEM_PROMPT, EXPLAINER_USER_PROMPT_TEMPLATE
 
 # Configure API Key
 api_key = os.getenv("GEMINI_API_KEY")
 
-def _configure_genai():
-    if not api_key:
-        print("Warning: GEMINI_API_KEY environment variable is not set")
-        return False
-    genai.configure(api_key=api_key)
-    return True
+# Initialize Client
+client = None
+if api_key:
+    client = genai.Client(api_key=api_key)
+else:
+    print("Warning: GEMINI_API_KEY environment variable is not set")
 
-# Initialize Model (can be None if config fails)
-model = None
-if _configure_genai():
-    # Reverting to a known stable model ID
-    model = genai.GenerativeModel("gemini-2.0-flash-lite")
+MODEL_ID = "gemini-2.0-flash-lite"
 
 
 def generate_fallback_explanation(structured_data: dict) -> str:
@@ -61,7 +58,7 @@ async def generate_explanation(structured_data: dict, use_llm: bool = True) -> s
     If use_llm is False, skips LLM and returns rule-based summary.
     Falls back to a rule-based summary if the API fails (e.g., quota exceeded).
     """
-    if not use_llm:
+    if not use_llm or not client:
         return generate_fallback_explanation(structured_data)
 
     try:
@@ -72,9 +69,10 @@ async def generate_explanation(structured_data: dict, use_llm: bool = True) -> s
             structured_data=structured_data
         )
 
-        response = model.generate_content(
-            [EXPLAINER_SYSTEM_PROMPT, user_prompt],
-            generation_config=genai.types.GenerationConfig(
+        response = client.models.generate_content(
+            model=MODEL_ID,
+            contents=[EXPLAINER_SYSTEM_PROMPT, user_prompt],
+            config=types.GenerateContentConfig(
                 temperature=0.2,
                 max_output_tokens=256,
             )
