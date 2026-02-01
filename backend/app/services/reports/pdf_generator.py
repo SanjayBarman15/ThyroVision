@@ -106,6 +106,28 @@ class PDFReportGenerator:
         elements.append(t2)
         elements.append(Spacer(1, 20))
 
+        # ---- ULTRASOUND FEATURES ----
+        features = pred.get("features", {})
+        feature_data = [
+            ["Feature", "Observation"],
+            ["Composition", features.get("composition", "N/A")],
+            ["Echogenicity", features.get("echogenicity", "N/A")],
+            ["Margins", features.get("margins", "N/A")],
+            ["Calcifications", features.get("calcifications", "N/A")],
+            ["Shape", features.get("shape", "N/A")],
+        ]
+
+        t3 = Table(feature_data, colWidths=[2.2*inch, 3.5*inch])
+        t3.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.whitesmoke),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ]))
+
+        elements.append(Paragraph("Ultrasound Features", styles["Heading3"]))
+        elements.append(t3)
+        elements.append(Spacer(1, 20))
+
         # ---- AI EXPLANATION ----
 
         elements.append(Paragraph("AI Explanation", styles["Heading3"]))
