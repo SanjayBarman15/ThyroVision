@@ -11,6 +11,7 @@ export type LogAction =
   | "SUBMIT_FEEDBACK_ERROR"
   | "VALIDATION_ERROR"
   | "SERVER_ERROR"
+  | "GENERATE_EXPLANATION"
   | "SYSTEM"
   | "AUTH_EVENT";
 

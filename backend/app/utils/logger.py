@@ -20,15 +20,31 @@ def log_event(
     metadata: Optional[Dict[str, Any]] = None,
     error_code: Optional[str] = None,
     error_message: Optional[str] = None,
+    exception: Optional[Exception] = None,
 ):
     try:
         if not LOGGING_ENABLED:
             return
 
+        # Auto-extract from exception if provided
+        if exception:
+            if not error_message:
+                error_message = str(exception)
+            if not error_code:
+                # If it's a FastAPI/Starlette HTTPException, use status_code as error_code
+                if hasattr(exception, "status_code"):
+                    error_code = str(exception.status_code)
+                else:
+                    error_code = type(exception).__name__
+
         # 1. Enforce uppercase to match Supabase CHECK constraint ('INFO','WARN','ERROR','FATAL')
         level_clean = level.upper()
 
-        # 2. Prepare payload
+        # 2. Default status code for successes
+        if level_clean == "INFO" and not error_code:
+            error_code = "OK"
+
+        # 3. Prepare payload
         final_request_id = request_id or uuid.uuid4()
         
         payload = {

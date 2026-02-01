@@ -151,7 +151,8 @@ async def upload_raw_image(
         metadata={
             "patient_id": patient_id,
             "filename": file.filename
-        }
+        },
+        error_code="UPLOAD_OK"
     )
 
     return {

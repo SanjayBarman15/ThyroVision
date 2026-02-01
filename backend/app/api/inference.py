@@ -174,7 +174,8 @@ async def run_inference(
             "tirads": inference["tirads"],
             "confidence": inference["confidence"],
             "inference_time_ms": inference["inference_time_ms"]
-        }
+        },
+        error_code="INFERENCE_OK"
     )
 
     return {
@@ -257,7 +258,8 @@ async def generate_prediction_explanation(
         metadata={
             "engine": result["explanation_metadata"]["engine"],
             "is_fallback": result["explanation_metadata"]["is_fallback"]
-        }
+        },
+        error_code="EXPLANATION_OK"
     )
 
     return {

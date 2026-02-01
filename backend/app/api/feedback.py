@@ -106,7 +106,8 @@ async def submit_feedback(
         metadata={
             "is_correct": feedback.is_correct,
             "tirads": feedback.corrected_tirads
-        }
+        },
+        error_code="FEEDBACK_OK"
     )
 
     # 5️⃣ Mark prediction as training candidate if incorrect

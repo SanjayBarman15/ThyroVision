@@ -75,6 +75,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         level="ERROR",
         action="VALIDATION_ERROR",
         request_id=req_id,
+        error_code="422",
         error_message="Input validation failed",
         metadata={"errors": exc.errors()},
     )
@@ -84,14 +85,19 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     req_id = getattr(request.state, "request_id", None)
+    
+    # Extract status code if available
+    status_code = getattr(exc, "status_code", 500)
+    
     log_event(
-        level="FATAL",
+        level="FATAL" if status_code >= 500 else "ERROR",
         action="SERVER_ERROR",
         request_id=req_id,
-        error_message=str(exc),
+        exception=exc,
+        error_code=str(status_code),
         metadata={"type": type(exc).__name__},
     )
-    return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
+    return JSONResponse(status_code=status_code, content={"detail": "Internal Server Error"})
 
 # ---------------------------
 # Favicon

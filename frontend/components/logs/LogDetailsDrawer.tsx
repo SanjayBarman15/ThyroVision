@@ -56,15 +56,23 @@ export function LogDetailsDrawer({
               <div className="flex items-center justify-between">
                 <LogLevelBadge level={log.level} className="text-xs px-3" />
                 <div className="flex items-center gap-2">
-                  {log.status === "success" ? (
-                    <div className="flex items-center gap-1.5 text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100">
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      Success
+                  {log.error_code &&
+                  ![
+                    "OK",
+                    "PATIENT_CREATED",
+                    "UPLOAD_OK",
+                    "INFERENCE_OK",
+                    "EXPLANATION_OK",
+                    "FEEDBACK_OK",
+                  ].includes(log.error_code) ? (
+                    <div className="flex items-center gap-1.5 text-xs text-rose-600 bg-rose-50 px-2 py-1 rounded-full border border-rose-100 font-bold uppercase tracking-tight">
+                      <XCircle className="h-3.5 w-3.5" />
+                      {log.error_code}
                     </div>
                   ) : (
-                    <div className="flex items-center gap-1.5 text-xs text-rose-600 bg-rose-50 px-2 py-1 rounded-full border border-rose-100">
-                      <XCircle className="h-3.5 w-3.5" />
-                      Failure
+                    <div className="flex items-center gap-1.5 text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100 font-bold uppercase tracking-tight">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      {log.error_code || "OK"}
                     </div>
                   )}
                 </div>

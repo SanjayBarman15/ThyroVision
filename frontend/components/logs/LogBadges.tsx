@@ -47,6 +47,7 @@ export function ActionBadge({ action, className }: ActionBadgeProps) {
     SUBMIT_FEEDBACK_ERROR: "Feedback Error",
     VALIDATION_ERROR: "Validation",
     SERVER_ERROR: "System Error",
+    GENERATE_EXPLANATION: "AI Explanation",
     SYSTEM: "System",
     AUTH_EVENT: "Auth",
   };

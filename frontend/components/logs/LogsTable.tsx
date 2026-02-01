@@ -173,11 +173,31 @@ export function LogsTable({
                     </div>
                   </TableCell>
                   <TableCell className="text-center">
-                    {log.error_code ? (
-                      <XCircle className="h-4 w-4 text-destructive inline-block" />
-                    ) : (
-                      <CheckCircle2 className="h-4 w-4 text-primary inline-block" />
-                    )}
+                    <div className="flex flex-col items-center gap-1">
+                      {log.error_code &&
+                      ![
+                        "OK",
+                        "PATIENT_CREATED",
+                        "UPLOAD_OK",
+                        "INFERENCE_OK",
+                        "EXPLANATION_OK",
+                        "FEEDBACK_OK",
+                      ].includes(log.error_code) ? (
+                        <>
+                          <XCircle className="h-4 w-4 text-destructive" />
+                          <span className="text-[10px] font-bold text-destructive px-1.5 py-0.5 bg-destructive/10 rounded uppercase tracking-tighter">
+                            {log.error_code}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="h-4 w-4 text-primary" />
+                          <span className="text-[10px] font-bold text-primary px-1.5 py-0.5 bg-primary/10 rounded uppercase tracking-tighter">
+                            {log.error_code || "OK"}
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="text-center">
                     <Button

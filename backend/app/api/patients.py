@@ -94,7 +94,8 @@ async def create_patient(
         metadata={
             "first_name": patient.first_name,
             "last_name": patient.last_name
-        }
+        },
+        error_code="PATIENT_CREATED"
     )
 
     return {"success": True, "patient": new_patient}
