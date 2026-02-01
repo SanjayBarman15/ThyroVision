@@ -3,7 +3,8 @@
 import type React from "react";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { CheckCircle2, AlertCircle } from "lucide-react";
+import { CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface PatientData {
   first_name: string;
@@ -17,9 +18,17 @@ interface StepReviewProps {
   data: PatientData;
   file: File | null;
   previewUrl: string | null;
+  useLlm: boolean;
+  onToggleLlm: (val: boolean) => void;
 }
 
-export const StepReview = ({ data, file, previewUrl }: StepReviewProps) => {
+export const StepReview = ({
+  data,
+  file,
+  previewUrl,
+  useLlm,
+  onToggleLlm,
+}: StepReviewProps) => {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div className="flex items-center gap-2 text-primary mb-2">
@@ -28,6 +37,7 @@ export const StepReview = ({ data, file, previewUrl }: StepReviewProps) => {
       </div>
 
       <Card className="overflow-hidden border-border bg-background/40 divide-y divide-border">
+        {/* ... (Existing patient details and medical data) ... */}
         <div className="p-4 bg-muted/30">
           <p className="text-xs font-bold text-muted-foreground uppercase tracking-tighter mb-4">
             Patient Details
@@ -49,8 +59,8 @@ export const StepReview = ({ data, file, previewUrl }: StepReviewProps) => {
                 {data.gender === "M"
                   ? "Male"
                   : data.gender === "F"
-                  ? "Female"
-                  : "Other"}
+                    ? "Female"
+                    : "Other"}
               </p>
             </div>
             <div>
@@ -105,11 +115,41 @@ export const StepReview = ({ data, file, previewUrl }: StepReviewProps) => {
         </div>
       </Card>
 
-      <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/10">
-        <AlertCircle className="h-4 w-4 text-primary mt-0.5" />
-        <p className="text-[11px] text-primary/80 leading-snug">
-          Confirming will start the AI Thyroid Analysis. Results are usually
-          available within 30 seconds.
+      {/* AI Explanation Toggle */}
+      <div
+        className="p-4 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer group"
+        onClick={() => onToggleLlm(!useLlm)}
+      >
+        <div className="flex items-start gap-3">
+          <div className="pt-0.5">
+            <Checkbox
+              id="ai-toggle"
+              checked={useLlm}
+              onCheckedChange={(checked: boolean) => onToggleLlm(!!checked)}
+              className="mt-1 border-primary/50 data-[state=checked]:bg-primary"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label
+              htmlFor="ai-toggle"
+              className="text-sm font-bold flex items-center gap-2 text-primary cursor-pointer"
+            >
+              <Sparkles className="h-3.5 w-3.5 fill-primary/20" />
+              AI Clinical Explanation
+            </Label>
+            <p className="text-[11px] text-muted-foreground leading-snug">
+              Request a natural language summary powered by Gemini. Leave
+              unchecked for standard rule-based results.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-start gap-2 p-3 rounded-lg bg-orange-500/5 border border-orange-500/10">
+        <AlertCircle className="h-4 w-4 text-orange-500 mt-0.5" />
+        <p className="text-[11px] text-orange-600/80 leading-snug">
+          AI generated content should be verified by a clinician. Rule-based
+          analysis remains our primary diagnostic baseline.
         </p>
       </div>
     </div>

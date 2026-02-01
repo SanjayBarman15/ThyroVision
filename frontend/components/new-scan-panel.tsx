@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   CheckCircle2,
   Loader2,
+  Sparkles,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
@@ -59,6 +60,7 @@ export default function NewScanPanel({
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [useLlm, setUseLlm] = useState(true);
 
   // --- Handlers ---
 
@@ -245,6 +247,40 @@ export default function NewScanPanel({
         );
       }
 
+      const inferenceData = await inferenceResponse.json();
+      const predictionId = inferenceData.prediction.id;
+
+      // 4. Trigger Explanation (Gemini or Fallback based on user choice)
+      toast.info(
+        useLlm ? "Generating AI Explanation..." : "Finalizing results...",
+        {
+          icon: <Sparkles className="h-4 w-4 text-primary animate-pulse" />,
+        },
+      );
+
+      const explainResponse = await fetch(
+        `${backendUrl}/inference/${predictionId}/explain`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ use_llm: useLlm }),
+        },
+      );
+
+      if (!explainResponse.ok) {
+        // We don't throw error here as the primary analysis is done,
+        // but we warn the user.
+        console.warn(
+          "Explanation generation failed, but analysis is complete.",
+        );
+        toast.warning(
+          "Analysis complete, but explanation generation was skipped.",
+        );
+      }
+
       toast.success("Analysis complete! Scan is ready for review.");
       if (onScanComplete) onScanComplete();
       handleClose();
@@ -365,6 +401,8 @@ export default function NewScanPanel({
                 data={formData}
                 file={imageFile}
                 previewUrl={previewUrl}
+                useLlm={useLlm}
+                onToggleLlm={setUseLlm}
               />
             )}
           </div>

@@ -55,11 +55,15 @@ def generate_fallback_explanation(structured_data: dict) -> str:
     return summary
 
 
-async def generate_explanation(structured_data: dict) -> str:
+async def generate_explanation(structured_data: dict, use_llm: bool = True) -> str:
     """
     Generate explanation using Gemini based on structured vision data.
+    If use_llm is False, skips LLM and returns rule-based summary.
     Falls back to a rule-based summary if the API fails (e.g., quota exceeded).
     """
+    if not use_llm:
+        return generate_fallback_explanation(structured_data)
+
     try:
         tirads = structured_data.get("tirads", "Unknown")
         

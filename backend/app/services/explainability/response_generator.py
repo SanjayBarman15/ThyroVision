@@ -9,7 +9,7 @@ class ResponseGenerator:
     """
 
     @staticmethod
-    async def generate(features: Dict[str, Any], tirads: int, confidence: float) -> Dict[str, Any]:
+    async def generate(features: Dict[str, Any], tirads: int, confidence: float, use_llm: bool = True) -> Dict[str, Any]:
         """
         Takes vision model output and returns AI explanation + metadata.
         """
@@ -23,7 +23,7 @@ class ResponseGenerator:
         }
 
         # Call LLM
-        explanation = await generate_explanation(structured_data)
+        explanation = await generate_explanation(structured_data, use_llm=use_llm)
         
         generation_time_ms = int((time.time() - start_time) * 1000)
         
