@@ -5,4 +5,5 @@ supabase
 python-dotenv
 pydantic
 pillow
-google-generativeai
+google-genai
+reportlab
