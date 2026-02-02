@@ -64,10 +64,21 @@ export default function DashboardPage() {
 
       // Fetch patients for this doctor
       // 1. Get Doctor ID (which is user.id)
-      // 2. Query patients
+      // 2. Query patients with latest predictions
       const { data: patientsData, error } = await supabase
         .from("patients")
-        .select("*")
+        .select(
+          `
+          *,
+          raw_images (
+            id,
+            uploaded_at,
+            predictions (
+              tirads
+            )
+          )
+        `,
+        )
         .eq("doctor_id", user.id)
         .order("created_at", { ascending: false });
 
@@ -78,15 +89,28 @@ export default function DashboardPage() {
 
       if (patientsData) {
         // Map DB data to UI format
-        const formattedPatients: Patient[] = patientsData.map((p) => ({
-          id: p.id,
-          name: `${p.first_name} ${p.last_name}`,
-          age: p.age || 0, // Fallback if age not calculated
-          gender: p.gender,
-          lastScan: new Date(p.created_at).toISOString().split("T")[0],
-          tirads: "N/A", // Placeholder until analysis is linked
-          status: "new", // Default status
-        }));
+        const formattedPatients: Patient[] = patientsData.map((p: any) => {
+          // Find the latest raw image that has a prediction
+          const latestRawImage = p.raw_images
+            ?.sort(
+              (a: any, b: any) =>
+                new Date(b.uploaded_at).getTime() -
+                new Date(a.uploaded_at).getTime(),
+            )
+            .find((img: any) => img.predictions && img.predictions.length > 0);
+
+          const tiradsScore = latestRawImage?.predictions?.[0]?.tirads;
+
+          return {
+            id: p.id,
+            name: `${p.first_name} ${p.last_name}`,
+            age: p.age || 0, // Fallback if age not calculated
+            gender: p.gender,
+            lastScan: new Date(p.created_at).toISOString().split("T")[0],
+            tirads: tiradsScore ? `TR${tiradsScore}` : "N/A",
+            status: tiradsScore ? "reviewed" : "new",
+          };
+        });
 
         setPatients(formattedPatients);
 
