@@ -1,4 +1,4 @@
-SUPABASE SCHEMA FOR ThyroVision
+SUPABASE SCHEMA FOR ThyroSight
 -- ============================
 -- 1. Doctors Table
 -- ============================

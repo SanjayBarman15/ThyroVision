@@ -153,7 +153,7 @@ export default function DashboardPage() {
                 ThyroSight
               </h1>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
-                Radiology Suite
+                Radiology Wigman
               </p>
             </div>
           </div>

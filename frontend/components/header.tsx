@@ -51,7 +51,7 @@ export default function Header({
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `ThyroVision_Report_${patientName.replace(/\s+/g, "_")}.pdf`;
+      a.download = `ThyroSight_Report_${patientName.replace(/\s+/g, "_")}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);

@@ -38,7 +38,7 @@ class PDFReportGenerator:
         
         # --- Header ---
         canvas.setFont("Helvetica-Bold", 14)
-        canvas.drawString(40, 810, "ThyroVision")
+        canvas.drawString(40, 810, "ThyroSight")
         
         canvas.setFont("Helvetica-Oblique", 9)
         canvas.setFillColor(colors.HexColor("#4a5568")) # Darker grey
