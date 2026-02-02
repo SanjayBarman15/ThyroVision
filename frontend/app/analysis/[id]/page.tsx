@@ -10,6 +10,8 @@ import ExplanationAccordion from "@/components/explanation-accordion";
 import FeedbackForm from "@/components/feedback-form";
 import ImageViewer from "@/components/image-viewer";
 import Header from "@/components/header";
+import NotFoundState from "@/components/ui/not-found-state";
+import { UserMinus } from "lucide-react";
 
 export default function AnalysisPage({
   params,
@@ -192,7 +194,20 @@ export default function AnalysisPage({
     );
   }
 
-  if (!patient) return <div>Patient not found</div>;
+  if (!patient) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <NotFoundState
+          title="Patient Not Found"
+          subtitle="Record Missing"
+          description="The patient record associated with this ID could not be found. It may have been archived or deleted."
+          icon={UserMinus}
+          actionLabel="Go to Dashboard"
+          actionHref="/dashboard"
+        />
+      </div>
+    );
+  }
 
   const currentImageUrl = rawImage?.file_url;
 
