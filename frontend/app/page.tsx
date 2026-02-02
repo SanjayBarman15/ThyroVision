@@ -12,10 +12,11 @@ import {
   ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-background">
+    <div className="min-h-screen bg-linear-to-b from-background to-background">
       <LandingHeader />
 
       {/* Hero Section */}
@@ -53,15 +54,16 @@ export default function LandingPage() {
             </Button>
           </div>
 
-          {/* Product Screenshot Placeholder */}
-          <div className="mt-16 rounded-lg border border-border bg-card p-8">
-            <div className="aspect-video rounded-md bg-gradient-to-br from-card to-background flex items-center justify-center">
-              <div className="text-center">
-                <Brain className="mx-auto mb-4 h-16 w-16 text-secondary opacity-50" />
-                <p className="text-muted-foreground">
-                  Product Interface Preview
-                </p>
-              </div>
+          {/* Product Screenshot */}
+          <div className="mt-16 overflow-hidden rounded-xl border border-border bg-card shadow-2xl transition-all hover:scale-[1.01]">
+            <div className="aspect-video relative w-full overflow-hidden bg-muted">
+              <Image
+                src="/landinghero.png"
+                alt="ThyroSight Product Interface Preview"
+                fill
+                className="object-cover"
+                priority
+              />
             </div>
           </div>
         </div>
@@ -112,25 +114,25 @@ export default function LandingPage() {
               </h3>
               <ul className="space-y-3">
                 <li className="flex gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                   <span>
                     AI-assisted TIRADS classification with confidence scores
                   </span>
                 </li>
                 <li className="flex gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                   <span>
                     Automated nodule localization and characterization
                   </span>
                 </li>
                 <li className="flex gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                   <span>
                     Explainable AI that doctors can understand and verify
                   </span>
                 </li>
                 <li className="flex gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                   <span>
                     Human-in-the-loop feedback system for continuous improvement
                   </span>
