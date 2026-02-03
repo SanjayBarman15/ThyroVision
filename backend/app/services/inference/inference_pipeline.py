@@ -10,7 +10,7 @@ from io import BytesIO
 from app.services.inference.roi_detector import MockROIDetector
 from app.services.inference.feature_classifier import MockFeatureClassifier
 from app.services.rules.tirads import calculate_tirads
-from app.services.inference.box_utils import xyxy_to_xywh
+from app.services.inference.box_utils import xyxy_to_xywh, map_box_to_raw_image
 from app.services.explainability.response_generator import ResponseGenerator
 
 
@@ -20,14 +20,15 @@ class InferencePipeline:
 
     Flow:
     1. Load raw image
-    2. ROI detection (Faster R-CNN)
-    3. ROI crop (no resize, no normalization)
-    4. Feature classification (Xception)
-    5. TI-RADS rule engine
-    6. Response assembly
+    2. SIMULATE: Focal Crop (Fixed input 512x512)
+    3. ROI detection (Faster R-CNN) on crop
+    4. Coordinate Remapping (Crop -> Raw Image)
+    5. Feature classification (Xception)
+    6. TI-RADS rule engine
+    7. Response assembly
     """
 
-    PIPELINE_VERSION = "mock-pipeline-v1"
+    PIPELINE_VERSION = "mock-pipeline-v2-simulation"
 
     def __init__(self):
         self.roi_detector = MockROIDetector()
@@ -46,43 +47,65 @@ class InferencePipeline:
             raise RuntimeError(f"Failed to load image: {str(e)}")
 
         # ─────────────────────────────────────────────
-        # 2️⃣ ROI Detection (VOC format: xmin,ymin,xmax,ymax)
+        # 2️⃣ SIMULATION: Focus Window (Pre-processing)
+        # ─────────────────────────────────────────────
+        # We simulate that the model requires a 512x512 input crop.
+        # We take a central focal crop to simulate the "Nodule Focus"
+        MODEL_INPUT_SIZE = 512
+        
+        crop_w = min(MODEL_INPUT_SIZE, image_width)
+        crop_h = min(MODEL_INPUT_SIZE, image_height)
+        
+        offset_x = (image_width - crop_w) // 2
+        offset_y = (image_height - crop_h) // 2
+
+        # ─────────────────────────────────────────────
+        # 3️⃣ ROI Detection (ON THE CROP)
         # ─────────────────────────────────────────────
         roi_result = self.roi_detector.detect(
-            image_width=image_width,
-            image_height=image_height,
+            image_width=crop_w,
+            image_height=crop_h,
         )
 
-        roi_voc = roi_result["bounding_box"]  # xyxy
+        roi_voc_local = roi_result["bounding_box"]  # xyxy local to crop
 
         # ─────────────────────────────────────────────
-        # 3️⃣ Convert ROI → xywh (frontend/backend format)
+        # 4️⃣ Coordinate Transformation (Local -> Raw)
         # ─────────────────────────────────────────────
-        bounding_box = xyxy_to_xywh({
-            **roi_voc,
-            "image_width": image_width,
-            "image_height": image_height,
-            "coordinate_space": "raw_image",
+        box_local_xywh = xyxy_to_xywh({
+            **roi_voc_local,
+            "image_width": crop_w,
+            "image_height": crop_h,
         })
 
+        bounding_box = map_box_to_raw_image(
+            box=box_local_xywh,
+            offset_x=offset_x,
+            offset_y=offset_y,
+            scale_factor=1.0, 
+            raw_w=image_width,
+            raw_h=image_height
+        )
+
         # ─────────────────────────────────────────────
-        # 4️⃣ Crop ROI (NO resize)
+        # 5️⃣ Crop ROI for Classification
         # ─────────────────────────────────────────────
+        # Still need the actual crop for the feature classifier
         roi_image = img.crop((
-            roi_voc["xmin"],
-            roi_voc["ymin"],
-            roi_voc["xmax"],
-            roi_voc["ymax"],
+            roi_voc_local["xmin"] + offset_x,
+            roi_voc_local["ymin"] + offset_y,
+            roi_voc_local["xmax"] + offset_x,
+            roi_voc_local["ymax"] + offset_y,
         ))
 
         # ─────────────────────────────────────────────
-        # 5️⃣ Feature Classification (Xception)
+        # 6️⃣ Feature Classification (Xception)
         # ─────────────────────────────────────────────
         feature_result = self.feature_classifier.classify(roi_image)
         features = feature_result["features"]
 
         # ─────────────────────────────────────────────
-        # 6️⃣ TI-RADS Rule Engine (PURE, stateless)
+        # 7️⃣ TI-RADS Rule Engine (PURE, stateless)
         # ─────────────────────────────────────────────
         tirads_result = calculate_tirads(features)
 
