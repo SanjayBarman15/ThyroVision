@@ -10,7 +10,7 @@ from io import BytesIO
 from app.services.inference.roi_detector import MockROIDetector
 from app.services.inference.feature_classifier import MockFeatureClassifier
 from app.services.rules.tirads import calculate_tirads
-from app.services.inference.box_utils import xyxy_to_xywh, map_box_to_raw_image
+from app.services.inference.box_utils import xyxy_to_xywh
 from app.services.explainability.response_generator import ResponseGenerator
 
 
@@ -47,56 +47,71 @@ class InferencePipeline:
             raise RuntimeError(f"Failed to load image: {str(e)}")
 
         # ─────────────────────────────────────────────
-        # 2️⃣ SIMULATION: Focus Window (Pre-processing)
+        # 2️⃣ ROI Detection (Faster R-CNN)
         # ─────────────────────────────────────────────
-        # We simulate that the model requires a 512x512 input crop.
-        # We take a central focal crop to simulate the "Nodule Focus"
-        MODEL_INPUT_SIZE = 512
-        
-        crop_w = min(MODEL_INPUT_SIZE, image_width)
-        crop_h = min(MODEL_INPUT_SIZE, image_height)
-        
-        offset_x = (image_width - crop_w) // 2
-        offset_y = (image_height - crop_h) // 2
-
-        # ─────────────────────────────────────────────
-        # 3️⃣ ROI Detection (ON THE CROP)
-        # ─────────────────────────────────────────────
+        # Detect on the full raw image
         roi_result = self.roi_detector.detect(
-            image_width=crop_w,
-            image_height=crop_h,
+            image_width=image_width,
+            image_height=image_height,
         )
 
-        roi_voc_local = roi_result["bounding_box"]  # xyxy local to crop
-
-        # ─────────────────────────────────────────────
-        # 4️⃣ Coordinate Transformation (Local -> Raw)
-        # ─────────────────────────────────────────────
-        box_local_xywh = xyxy_to_xywh({
-            **roi_voc_local,
-            "image_width": crop_w,
-            "image_height": crop_h,
+        roi_voc = roi_result["bounding_box"]  # xyxy in raw image space
+        
+        # Format for API response (xywh)
+        bounding_box = xyxy_to_xywh({
+            **roi_voc,
+            "image_width": image_width,
+            "image_height": image_height,
+            "coordinate_space": "raw_image"
         })
 
-        bounding_box = map_box_to_raw_image(
-            box=box_local_xywh,
-            offset_x=offset_x,
-            offset_y=offset_y,
-            scale_factor=1.0, 
-            raw_w=image_width,
-            raw_h=image_height
+        # ─────────────────────────────────────────────
+        # 3️⃣ Draw Bounding Box (Visual Guide for Xception)
+        # ─────────────────────────────────────────────
+        # The Xception model was trained with visual bounding boxes as features.
+        # We must draw the box on the image before cropping.
+        
+        from PIL import ImageDraw
+        
+        # Create a mutable copy to draw on
+        img_with_box = img.copy()
+        draw = ImageDraw.Draw(img_with_box)
+        
+        # Draw red rectangle (width=3 to be visible but not overwhelming)
+        draw.rectangle(
+            [roi_voc["xmin"], roi_voc["ymin"], roi_voc["xmax"], roi_voc["ymax"]],
+            outline="red",
+            width=3
         )
 
         # ─────────────────────────────────────────────
-        # 5️⃣ Crop ROI for Classification
+        # 4️⃣ Expand Box (Padding for Context)
         # ─────────────────────────────────────────────
-        # Still need the actual crop for the feature classifier
-        roi_image = img.crop((
-            roi_voc_local["xmin"] + offset_x,
-            roi_voc_local["ymin"] + offset_y,
-            roi_voc_local["xmax"] + offset_x,
-            roi_voc_local["ymax"] + offset_y,
-        ))
+        # We need to capture some context around the nodule, not just the nodule itself.
+        # Expand the box by 20%
+        
+        PADDING_FACTOR = 0.20
+        box_w = roi_voc["xmax"] - roi_voc["xmin"]
+        box_h = roi_voc["ymax"] - roi_voc["ymin"]
+        
+        pad_x = int(box_w * PADDING_FACTOR)
+        pad_y = int(box_h * PADDING_FACTOR)
+        
+        # Calculate expanded coordinates, ensuring we stay within image bounds
+        crop_xmin = max(0, roi_voc["xmin"] - pad_x)
+        crop_ymin = max(0, roi_voc["ymin"] - pad_y)
+        crop_xmax = min(image_width, roi_voc["xmax"] + pad_x)
+        crop_ymax = min(image_height, roi_voc["ymax"] + pad_y)
+        
+        # ─────────────────────────────────────────────
+        # 5️⃣ Crop & Resize (Pre-processing for Xception)
+        # ─────────────────────────────────────────────
+        # Crop the expanded region (which contains the drawn box)
+        roi_image = img_with_box.crop((crop_xmin, crop_ymin, crop_xmax, crop_ymax))
+        
+        # Resize to fixed input size for Xception
+        MODEL_INPUT_SIZE = (224, 224)
+        roi_image = roi_image.resize(MODEL_INPUT_SIZE, Image.Resampling.BILINEAR)
 
         # ─────────────────────────────────────────────
         # 6️⃣ Feature Classification (Xception)

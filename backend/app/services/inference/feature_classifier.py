@@ -26,8 +26,9 @@ class MockFeatureClassifier:
         Simulate feature classification on a cropped ROI.
 
         Args:
-            roi_image: Placeholder for cropped ROI tensor/image
-                       (not used in mock)
+            roi_image: Cropped and resized ROI image (PIL Image).
+                       Expected size: (224, 224).
+                       Must contain the visual bounding box if model was trained with it.
 
         Returns:
             Dict: Feature predictions + model metadata
