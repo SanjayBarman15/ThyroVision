@@ -135,7 +135,10 @@ backend/
 │   |    |   └── pipeline.py            # orchestration
 │   |    ├── rules/               # Rule services
 │   |    |   └── tirads.py              # PURE rule engine
-│   |    ├── preprocessing.py      #Empty for now
+│   |    ├── preprocessing     
+|   |    |   └──preprocessining.py   #Empty for now
+|   |    |── report
+|   |    |   └── report.py  
 │   |    ├── explainability/      # Explainability services 
 │   |    |   ├── llm_client.py          # LLM client 
 │   |    |   ├── prompt_templates.py    # Prompt templates 

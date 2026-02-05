@@ -102,7 +102,7 @@ CREATE TABLE predictions (
     features JSONB,                         -- ML-extracted features
     bounding_box JSONB,                     -- ROI (xywh, raw image space)
     inference_time_ms INT CHECK (inference_time_ms >= 0),
-
+    tirads_confidences JSONB NOT NULL DEFAULT '{}',
     training_candidate BOOLEAN DEFAULT FALSE,
 
     ai_explanation TEXT,
