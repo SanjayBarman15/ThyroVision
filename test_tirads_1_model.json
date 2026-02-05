@@ -1,0 +1,37 @@
+//model data json
+{
+  "model_info": {
+    "architecture": "Xception",
+    "backbone": "Xception (ImageNet pretrained)",
+    "num_classes": 5,
+    "input_shape": [
+      224,
+      224,
+      3
+    ],
+    "framework": "TensorFlow/Keras"
+  },
+  "prediction_details": {
+    "predicted_class": "TIRADS_1",
+    "predicted_index": 0,
+    "confidence": 0.95,
+    "probability_vector": [
+      0.95,
+      0.02,
+      0.02,
+      0.02,
+      0.02
+    ]
+  },
+  "detection_metadata": {
+    "detection_confidence": 0.92
+  },
+  "gradcam_technical": {
+    "enabled": true,
+    "target_layer": "block14_sepconv2_act",
+    "heatmap_shape": [
+      7,
+      7
+    ]
+  }
+}
