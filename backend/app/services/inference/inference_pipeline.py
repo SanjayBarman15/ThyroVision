@@ -12,6 +12,8 @@ from app.services.inference.feature_classifier import MockFeatureClassifier
 from app.services.rules.tirads import calculate_tirads
 from app.services.inference.box_utils import xyxy_to_xywh
 from app.services.explainability.response_generator import ResponseGenerator
+import numpy as np
+from app.services.preprocessing.feature_preprocessing import xception_preprocess_from_array
 
 
 class InferencePipeline:
@@ -66,66 +68,44 @@ class InferencePipeline:
         })
 
         # ─────────────────────────────────────────────
-        # 3️⃣ Draw Bounding Box (Visual Guide for Xception)
+        # 3️⃣ Preprocessing (Real Xception Logic)
         # ─────────────────────────────────────────────
-        # The Xception model was trained with visual bounding boxes as features.
-        # We must draw the box on the image before cropping.
+        # We use the raw image and the ROI from Step 2.
+        # The preprocessing function handles cropping, resizing (299x299),
+        # and normalization (-1 to 1).
         
-        from PIL import ImageDraw
+        # Convert PIL to Numpy (RGB)
+        image_array = np.array(img)
         
-        # Create a mutable copy to draw on
-        img_with_box = img.copy()
-        draw = ImageDraw.Draw(img_with_box)
+        # Extract bbox as list [xmin, ymin, xmax, ymax]
+        bbox_list = [
+            roi_voc["xmin"],
+            roi_voc["ymin"],
+            roi_voc["xmax"],
+            roi_voc["ymax"]
+        ]
         
-        # Draw red rectangle (width=3 to be visible but not overwhelming)
-        draw.rectangle(
-            [roi_voc["xmin"], roi_voc["ymin"], roi_voc["xmax"], roi_voc["ymax"]],
-            outline="red",
-            width=3
-        )
+        try:
+            # Result is a torch.Tensor (1, 3, 299, 299) if batched or (3, 299, 299)
+            # The function returns (3, 299, 299)
+            roi_tensor = xception_preprocess_from_array(image_array, bbox_list)
+        except Exception as e:
+            # Fallback if crop fails (e.g. edge case)
+            raise RuntimeError(f"Preprocessing failed: {str(e)}")
 
         # ─────────────────────────────────────────────
-        # 4️⃣ Expand Box (Padding for Context)
+        # 4️⃣ Feature Classification (Xception)
         # ─────────────────────────────────────────────
-        # We need to capture some context around the nodule, not just the nodule itself.
-        # Expand the box by 20%
-        
-        PADDING_FACTOR = 0.20
-        box_w = roi_voc["xmax"] - roi_voc["xmin"]
-        box_h = roi_voc["ymax"] - roi_voc["ymin"]
-        
-        pad_x = int(box_w * PADDING_FACTOR)
-        pad_y = int(box_h * PADDING_FACTOR)
-        
-        # Calculate expanded coordinates, ensuring we stay within image bounds
-        crop_xmin = max(0, roi_voc["xmin"] - pad_x)
-        crop_ymin = max(0, roi_voc["ymin"] - pad_y)
-        crop_xmax = min(image_width, roi_voc["xmax"] + pad_x)
-        crop_ymax = min(image_height, roi_voc["ymax"] + pad_y)
-        
-        # ─────────────────────────────────────────────
-        # 5️⃣ Crop & Resize (Pre-processing for Xception)
-        # ─────────────────────────────────────────────
-        # Crop the expanded region (which contains the drawn box)
-        roi_image = img_with_box.crop((crop_xmin, crop_ymin, crop_xmax, crop_ymax))
-        
-        # Resize to fixed input size for Xception
-        MODEL_INPUT_SIZE = (224, 224)
-        roi_image = roi_image.resize(MODEL_INPUT_SIZE, Image.Resampling.BILINEAR)
-
-        # ─────────────────────────────────────────────
-        # 6️⃣ Feature Classification (Xception)
-        # ─────────────────────────────────────────────
-        feature_result = self.feature_classifier.classify(roi_image)
+        feature_result = self.feature_classifier.classify(roi_tensor)
         features = feature_result["features"]
 
         # ─────────────────────────────────────────────
-        # 7️⃣ TI-RADS Rule Engine (PURE, stateless)
+        # 5️⃣ TI-RADS Rule Engine (PURE, stateless)
         # ─────────────────────────────────────────────
         tirads_result = calculate_tirads(features)
 
         # ─────────────────────────────────────────────
-        # 8️⃣ AI Explanation (Gemini)
+        # 6️⃣ AI Explanation (Gemini)
         # ─────────────────────────────────────────────
         ai_result = await ResponseGenerator.generate(
             features=features,
@@ -134,14 +114,27 @@ class InferencePipeline:
         )
 
         # ─────────────────────────────────────────────
-        # 9️⃣ Final response
+        # 7️⃣ Final response
         # ─────────────────────────────────────────────
         inference_time_ms = int((time.time() - start_time) * 1000)
+
+        # Mock TI-RADS confidences (will be replaced by real Xception model output)
+        # Format matches xception_output_format.json: all_tirads_probabilities
+        tirads_confidences = {
+            "TIRADS_1": 0.05,
+            "TIRADS_2": 0.10,
+            "TIRADS_3": 0.70,
+            "TIRADS_4": 0.10,
+            "TIRADS_5": 0.05
+        }
+        # Boost the predicted class confidence
+        tirads_confidences[f"TIRADS_{tirads_result['tirads']}"] = tirads_result["confidence"]
 
         return {
             "predicted_class": tirads_result["tirads"],
             "tirads": tirads_result["tirads"],
             "confidence": tirads_result["confidence"],
+            "tirads_confidences": tirads_confidences,
 
             "features": features,
             "bounding_box": bounding_box,

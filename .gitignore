@@ -49,6 +49,7 @@ frontend/yarn-error.log*
 # =====================
 .vscode/
 .idea/
+*.pth
 *.sublime-project
 *.sublime-workspace
 

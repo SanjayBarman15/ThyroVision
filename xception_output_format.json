@@ -1,102 +1,139 @@
 {
-  "roi_id": "test_tirads_5",
-  "timestamp": "2026-02-06T03:13:32.655648",
+  "roi_id": "nodule_000003",
+  "timestamp": "2026-02-06T06:32:04",
   "classification": {
-    "predicted_tirads": "TIRADS_5",
-    "confidence_score": 0.91,
+    "predicted_tirads": "TIRADS_3",
+    "confidence_score": 0.9129,
     "all_tirads_probabilities": {
-      "TIRADS_1": 0.02,
-      "TIRADS_2": 0.02,
-      "TIRADS_3": 0.02,
-      "TIRADS_4": 0.02,
-      "TIRADS_5": 0.91
+      "TIRADS_1": 0.007600525859743357,
+      "TIRADS_2": 0.06848777830600739,
+      "TIRADS_3": 0.9129054546356201,
+      "TIRADS_4": 0.010642646811902523,
+      "TIRADS_5": 0.00036360652302391827
     }
   },
   "nodule_measurements": {
-    "max_dimension_mm": 18.5,
-    "min_dimension_mm": 16.2,
-    "area_mm2": 235.4,
-    "volume_mm3": 2542.1
+    "max_dimension_mm": 16.2,
+    "min_dimension_mm": 12.3,
+    "area_mm2": 1992.6,
+    "volume_mm3": 24509.0
+  },
+  "tirads_features": {
+    "composition": {
+      "type": "solid",
+      "description": "Solid or almost completely solid",
+      "points": 2
+    },
+    "echogenicity": {
+      "type": "isoechoic",
+      "description": "Isoechoic (same as thyroid)",
+      "mean_intensity": 86.15,
+      "points": 1
+    },
+    "shape": {
+      "type": "wider-than-tall",
+      "aspect_ratio": 0.759,
+      "description": "Wider than tall (horizontal orientation)",
+      "points": 0
+    },
+    "margin": {
+      "type": "smooth",
+      "description": "Smooth margins",
+      "points": 0
+    },
+    "echogenic_foci": {
+      "type": "none",
+      "description": "None or large comet-tail artifacts",
+      "points": 0
+    },
+    "total_points": 3,
+    "points_breakdown": {
+      "composition": 2,
+      "echogenicity": 1,
+      "shape": 0,
+      "margin": 0,
+      "echogenic_foci": 0
+    }
   },
   "clinical_recommendation": {
-    "tirads_category": "TR5 - Highly Suspicious",
-    "risk_level": "Highly suspicious",
-    "malignancy_risk": ">20%",
-    "suggested_action": "URGENT_REFERRAL",
-    "fna_threshold_mm": 10,
-    "followup_threshold_mm": 5,
-    "recommendation_text": "FNA if \u22651.0 cm, follow-up if \u22650.5 cm"
+    "tirads_category": "TR3 - Mildly Suspicious",
+    "risk_level": "Mildly suspicious",
+    "malignancy_risk": "<5%",
+    "suggested_action": "FOLLOW_UP",
+    "fna_threshold_mm": 25,
+    "followup_threshold_mm": 15,
+    "recommendation_text": "FNA if ≥2.5 cm, follow-up if ≥1.5 cm"
   },
   "gradcam_explainability": {
-    "target_layer": "block14_sepconv2_act",
-    "target_class": "TIRADS_5",
+    "target_layer": "last_conv_layer",
+    "target_class": "TIRADS_3",
     "heatmap_shape": [
       7,
       7
     ],
     "heatmap": [
       [
-        0.02,
-        0.05,
-        0.08,
-        0.12,
-        0.09,
-        0.04,
-        0.01
+        0.2382046308194058,
+        0.7967785199283614,
+        0.17040117252292752,
+        0.5807942751754673,
+        0.1512050179695683,
+        0.014570747931061945,
+        0.8058158250014527
       ],
       [
-        0.06,
-        0.18,
-        0.35,
-        0.42,
-        0.38,
-        0.15,
-        0.03
+        0.08616482110656576,
+        0.9621866285062912,
+        0.14979836297932425,
+        0.4311843365189416,
+        0.9562167661146397,
+        0.4607538285473908,
+        0.23060949132052289
       ],
       [
-        0.11,
-        0.38,
-        0.72,
-        0.89,
-        0.75,
-        0.32,
-        0.08
+        0.2121941695752041,
+        0.19226138567590445,
+        0.9362984872157183,
+        0.8764867853790147,
+        0.48928849306922917,
+        0.5348113263123917,
+        0.7325568904222796
       ],
       [
-        0.15,
-        0.45,
-        0.85,
-        1.0,
-        0.88,
-        0.41,
-        0.12
+        0.3361675912910116,
+        0.45378251904232125,
+        0.8288690610292717,
+        0.384236933163959,
+        0.21916412514280448,
+        0.11709597222496393,
+        0.7451538807671179
       ],
       [
-        0.1,
-        0.36,
-        0.68,
-        0.82,
-        0.71,
-        0.29,
-        0.07
+        0.3306289591699684,
+        0.8573041880082282,
+        0.6411961994893588,
+        0.20202863240343227,
+        0.19646695509863665,
+        0.011690316907801646,
+        0.08418594558329573
       ],
       [
-        0.05,
-        0.14,
-        0.31,
-        0.38,
-        0.33,
-        0.12,
-        0.03
+        0.8799954684783325,
+        0.9075380302400063,
+        0.7094313572274865,
+        0.5604480051952191,
+        0.012338176474502416,
+        0.12268824667989686,
+        0.48979430325044593
       ],
       [
-        0.01,
-        0.04,
-        0.07,
-        0.1,
-        0.08,
-        0.03,
-        0.01
+        0.2926049590951557,
+        0.1950179946716586,
+        0.26046543782177,
+        0.640589214754451,
+        0.38099455285898387,
+        0.13306573619466833,
+        0.0968695729816299
       ]
     ],
     "color_mapping": {
@@ -107,40 +144,69 @@
     }
   },
   "nodule_features": {
+    "available": true,
+    "bbox": [
+      151,
+      129,
+      313,
+      252
+    ],
     "detection_confidence": 0.92,
     "nodule_size_mm": [
-      18.5,
-      16.2
+      16.2,
+      12.3
+    ],
+    "original_image_size": [
+      718,
+      500
     ]
   },
   "model_info": {
     "architecture": "Xception",
     "backbone": "Xception (ImageNet pretrained)",
+    "num_classes": 5,
+    "class_names": [
+      "TIRADS_1",
+      "TIRADS_2",
+      "TIRADS_3",
+      "TIRADS_4",
+      "TIRADS_5"
+    ],
     "input_shape": [
-      224,
-      224,
+      299,
+      299,
       3
     ],
-    "framework": "TensorFlow/Keras"
+    "framework": "PyTorch"
   },
   "prediction_details": {
-    "predicted_class": "TIRADS_5",
-    "predicted_index": 4,
-    "confidence": 0.91,
+    "predicted_class": "TIRADS_3",
+    "predicted_index": 2,
+    "confidence": 0.9129,
     "probability_vector": [
-      0.02,
-      0.02,
-      0.02,
-      0.02,
-      0.91
+      0.0076,
+      0.0685,
+      0.9129,
+      0.0106,
+      0.0004
     ]
   },
   "detection_metadata": {
-    "detection_confidence": 0.92
+    "bbox": [
+      151,
+      129,
+      313,
+      252
+    ],
+    "detection_confidence": 0.92,
+    "original_size": [
+      718,
+      500
+    ]
   },
   "gradcam_technical": {
     "enabled": true,
-    "target_layer": "block14_sepconv2_act",
+    "target_layer": "last_conv_layer",
     "heatmap_shape": [
       7,
       7
