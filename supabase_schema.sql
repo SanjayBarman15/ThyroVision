@@ -97,12 +97,12 @@ CREATE TABLE predictions (
     predicted_class INT NOT NULL,
     tirads INT NOT NULL CHECK (tirads BETWEEN 1 AND 5),
     confidence FLOAT NOT NULL CHECK (confidence BETWEEN 0 AND 1),
+    tirads_confidences JSONB NOT NULL DEFAULT '{}', -- Added all class tirads score 
     model_version TEXT NOT NULL,           -- Pipeline version (e.g. pipeline-v1)
     model_metadata JSONB NOT NULL,          -- ROI + classifier + rule engine versions
     features JSONB,                         -- ML-extracted features
     bounding_box JSONB,                     -- ROI (xywh, raw image space)
     inference_time_ms INT CHECK (inference_time_ms >= 0),
-    tirads_confidences JSONB NOT NULL DEFAULT '{}',
     training_candidate BOOLEAN DEFAULT FALSE,
 
     ai_explanation TEXT,

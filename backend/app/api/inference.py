@@ -147,6 +147,7 @@ async def run_inference(
         "predicted_class": inference["predicted_class"],
         "tirads": inference["tirads"],
         "confidence": inference["confidence"],
+        "tirads_confidences": inference["tirads_confidences"],  # All class probabilities
         "model_version": inference["pipeline_version"],
         "model_metadata": inference["models"],
         "inference_time_ms": inference["inference_time_ms"],
