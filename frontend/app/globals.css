@@ -41,7 +41,7 @@
 }
 
 .dark {
-  /* Dark medical theme for ThyroVision - dark slate background, emerald green accents, blue secondary */
+  /* Dark medical theme for ThyroSight - dark slate background, emerald green accents, blue secondary */
   --background: oklch(0.12 0 0); /* Dark slate #0f172a */
   --foreground: oklch(0.95 0 0); /* Light text */
   --card: oklch(0.18 0 0); /* Slate cards #1e293b */

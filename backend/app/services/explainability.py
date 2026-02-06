@@ -1,1 +1,0 @@
-# Grad-CAM or heatmap generation

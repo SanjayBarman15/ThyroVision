@@ -3,13 +3,21 @@
 import { Card } from "@/components/ui/card";
 import { Users, AlertTriangle, FileInput, MessageSquare } from "lucide-react";
 
-export default function StatsStrip() {
+interface StatsStripProps {
+  totalPatients: number;
+  newScansCount: number;
+}
+
+export default function StatsStrip({
+  totalPatients,
+  newScansCount,
+}: StatsStripProps) {
   const stats = [
     {
       label: "Total Patients",
-      value: "1,248",
+      value: totalPatients.toLocaleString(),
       icon: Users,
-      trend: "+12%",
+      trend: "+12%", // Mock trend for now
       color: "text-blue-500",
       bg: "bg-blue-500/10",
     },
@@ -23,7 +31,7 @@ export default function StatsStrip() {
     },
     {
       label: "New Scans (24h)",
-      value: "8",
+      value: newScansCount.toString(),
       icon: FileInput,
       trend: "New",
       color: "text-emerald-500",

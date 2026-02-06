@@ -1,265 +1,459 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { ChevronRight, ChevronLeft, X, Upload } from "lucide-react"
-import { useRouter } from "next/navigation"
+import type React from "react";
+import { useState, useCallback, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  X,
+  ChevronRight,
+  ChevronLeft,
+  CheckCircle2,
+  Loader2,
+  Sparkles,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
+import { toast } from "sonner";
 
-interface NewScanPanelProps {
-  isOpen: boolean
-  onClose: () => void
+// Import step components
+import { StepPatientInfo } from "./new-scan/step-patient-info";
+import { StepUploadImage } from "./new-scan/step-upload-image";
+import { StepReview } from "./new-scan/step-review";
+
+// --- Types ---
+
+interface PatientData {
+  first_name: string;
+  last_name: string;
+  dob: string;
+  gender: string;
+  past_medical_data: string;
 }
 
-export default function NewScanPanel({ isOpen, onClose }: NewScanPanelProps) {
-  const [step, setStep] = useState(1)
-  const router = useRouter()
-  const [formData, setFormData] = useState({
-    patientName: "",
-    age: "",
+interface NewScanPanelProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onScanComplete?: () => void;
+}
+
+// --- Main Component ---
+
+export default function NewScanPanel({
+  isOpen,
+  onClose,
+  onScanComplete,
+}: NewScanPanelProps) {
+  const [step, setStep] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showMedical, setShowMedical] = useState(false);
+  const [createdPatientId, setCreatedPatientId] = useState<string | null>(null);
+  const router = useRouter();
+  const supabase = createClient();
+
+  const [formData, setFormData] = useState<PatientData>({
+    first_name: "",
+    last_name: "",
+    dob: "",
     gender: "",
-    medicalHistory: "",
-    imageFile: null as File | null,
-  })
-  const [showMedicalHistory, setShowMedicalHistory] = useState(false)
+    past_medical_data: "",
+  });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [useLlm, setUseLlm] = useState(true);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setFormData((prev) => ({ ...prev, imageFile: file }))
-    }
-  }
+  // --- Handlers ---
 
-  const isStep1Valid = formData.patientName && formData.age && formData.gender
-  const isStep2Valid = formData.imageFile !== null
-  const isStep3Valid = isStep1Valid && isStep2Valid
-
-  const handleSubmit = () => {
-    if (isStep3Valid) {
-      console.log("Submitting scan:", formData)
-      handleClose()
-      router.push("/analysis/1")
-    }
-  }
-
-  const handleClose = () => {
-    setStep(1)
+  const handleClose = useCallback(() => {
+    setStep(1);
     setFormData({
-      patientName: "",
-      age: "",
+      first_name: "",
+      last_name: "",
+      dob: "",
       gender: "",
-      medicalHistory: "",
-      imageFile: null,
-    })
-    setShowMedicalHistory(false)
-    onClose()
-  }
+      past_medical_data: "",
+    });
+    setImageFile(null);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setShowMedical(false);
+    setCreatedPatientId(null);
+    onClose();
+  }, [onClose, previewUrl]);
 
-  if (!isOpen) return null
+  // Handle image preview lifecycle
+  useEffect(() => {
+    if (imageFile) {
+      const url = URL.createObjectURL(imageFile);
+      setPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    }
+  }, [imageFile]);
+
+  const handleInputChange = useCallback(
+    (
+      e: React.ChangeEvent<
+        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+      >,
+    ) => {
+      const { name, value } = e.target;
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    },
+    [],
+  );
+
+  const handleFileChange = useCallback((file: File) => {
+    // Validation
+    const allowedTypes = [
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+      "application/dicom",
+    ];
+    const isDcm = file.name.toLowerCase().endsWith(".dcm");
+
+    if (!allowedTypes.includes(file.type) && !isDcm) {
+      toast.error("Invalid file type. Please upload PNG, JPG, or DICOM.");
+      return;
+    }
+
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("File size exceeds 50MB limit.");
+      return;
+    }
+
+    setImageFile(file);
+    toast.success("Image selected successfully");
+  }, []);
+
+  const validateStep = useCallback(
+    (currentStep: number) => {
+      if (currentStep === 1) {
+        return !!(
+          formData.first_name &&
+          formData.last_name &&
+          formData.dob &&
+          formData.gender
+        );
+      }
+      if (currentStep === 2) {
+        return !!imageFile;
+      }
+      return true;
+    },
+    [formData, imageFile],
+  );
+
+  const handleNext = useCallback(() => {
+    if (step === 1 && new Date(formData.dob) > new Date()) {
+      toast.error("Date of birth cannot be in the future");
+      return;
+    }
+    if (step < 3 && validateStep(step)) {
+      setStep(step + 1);
+    }
+  }, [step, validateStep, formData.dob]);
+
+  const handleSubmit = async () => {
+    if (!validateStep(1) || !validateStep(2)) return;
+
+    setIsLoading(true);
+    try {
+      const {
+        data: { session },
+        error: authError,
+      } = await supabase.auth.getSession();
+      if (authError || !session)
+        throw new Error("Authentication failed. Please log in again.");
+
+      const token = session.access_token;
+      const backendUrl =
+        process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+
+      // 1. Create Patient (skip if already created during retry)
+      let patientId = createdPatientId;
+      if (!patientId) {
+        const patientResponse = await fetch(`${backendUrl}/patients/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(formData),
+        });
+
+        if (!patientResponse.ok) {
+          const err = await patientResponse.json();
+          const detail =
+            typeof err.detail === "string"
+              ? err.detail
+              : JSON.stringify(err.detail);
+          throw new Error(detail || "Failed to create patient record");
+        }
+
+        const res = await patientResponse.json();
+        patientId = res.patient.id;
+        setCreatedPatientId(patientId);
+      }
+
+      // 2. Upload Image
+      const imageFormData = new FormData();
+      imageFormData.append("patient_id", patientId as string);
+      imageFormData.append("file", imageFile!);
+
+      const imageResponse = await fetch(`${backendUrl}/images/upload-raw`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: imageFormData,
+      });
+
+      if (!imageResponse.ok) {
+        const err = await imageResponse.json();
+        const detail =
+          typeof err.detail === "string"
+            ? err.detail
+            : JSON.stringify(err.detail);
+        throw new Error(
+          `Profile created, but image upload failed: ${
+            detail || imageResponse.statusText
+          }`,
+        );
+      }
+
+      const imageData = await imageResponse.json();
+      const imageId = imageData.image_id;
+
+      // 3. Trigger Inference
+      toast.info("Starting AI Analysis...", {
+        icon: <Loader2 className="h-4 w-4 animate-spin" />,
+      });
+      const inferenceResponse = await fetch(`${backendUrl}/inference/run`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ image_id: imageId }),
+      });
+
+      if (!inferenceResponse.ok) {
+        const err = await inferenceResponse.json();
+        const detail =
+          typeof err.detail === "string"
+            ? err.detail
+            : JSON.stringify(err.detail);
+        throw new Error(
+          `Upload success, but AI analysis failed: ${detail || "Unknown error"}`,
+        );
+      }
+
+      const inferenceData = await inferenceResponse.json();
+      const predictionId = inferenceData.prediction.id;
+
+      // 4. Trigger Explanation (Gemini or Fallback based on user choice)
+      toast.info(
+        useLlm ? "Generating AI Explanation..." : "Finalizing results...",
+        {
+          icon: <Sparkles className="h-4 w-4 text-primary animate-pulse" />,
+        },
+      );
+
+      const explainResponse = await fetch(
+        `${backendUrl}/inference/${predictionId}/explain`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ use_llm: useLlm }),
+        },
+      );
+
+      if (!explainResponse.ok) {
+        // We don't throw error here as the primary analysis is done,
+        // but we warn the user.
+        console.warn(
+          "Explanation generation failed, but analysis is complete.",
+        );
+        toast.warning(
+          "Analysis complete, but explanation generation was skipped.",
+        );
+      }
+
+      toast.success("Analysis complete! Scan is ready for review.");
+      if (onScanComplete) onScanComplete();
+      handleClose();
+      // Redirect to analysis page for this patient
+      router.push(`/analysis/${patientId}`);
+      router.refresh();
+    } catch (error: any) {
+      console.error("[SubmissionError]", error);
+      toast.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isOpen) return;
+      if (e.key === "Enter" && !isLoading) {
+        if (step < 3) handleNext();
+        else handleSubmit();
+      }
+      if (e.key === "Escape") handleClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, step, handleNext, handleSubmit, handleClose, isLoading]);
+
+  if (!isOpen) return null;
 
   return (
-    <>
+    <div
+      className="fixed inset-0 z-50 flex justify-end"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="panel-title"
+    >
       {/* Overlay */}
-      <div className="fixed inset-0 z-40 bg-black/50 transition-opacity" onClick={handleClose} />
+      <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-500"
+        onClick={handleClose}
+        aria-hidden="true"
+      />
 
       {/* Slide-over Panel */}
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md overflow-y-auto border-l border-border bg-card shadow-lg transform transition-transform">
+      <div className="relative w-full max-w-lg flex flex-col bg-card border-l border-border shadow-2xl animate-in slide-in-from-right duration-500 ease-in-out">
         {/* Header */}
-        <div className="sticky top-0 border-b border-border bg-card p-6 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-foreground">New Scan</h2>
-          <button onClick={handleClose} className="text-muted-foreground hover:text-foreground transition-colors">
-            <X className="h-5 w-5" />
+        <div className="flex items-center justify-between p-6 border-b border-border bg-card/80 backdrop-blur sticky top-0 z-10 transition-all">
+          <div className="space-y-1">
+            <h2
+              id="panel-title"
+              className="text-2xl font-bold text-foreground flex items-center gap-3"
+            >
+              New Scan
+              {isLoading && (
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              )}
+            </h2>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">
+              ThyroSight Intelligent Analysis
+            </p>
+          </div>
+          <button
+            onClick={handleClose}
+            className="p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+            aria-label="Close panel"
+          >
+            <X className="h-6 w-6" />
           </button>
         </div>
 
-        {/* Step Indicator */}
-        <div className="border-b border-border px-6 py-4">
-          <div className="flex gap-2">
+        {/* Dynamic Step Indicator */}
+        <div className="px-6 py-5 bg-muted/20">
+          <div className="flex items-center gap-3">
             {[1, 2, 3].map((s) => (
-              <div
-                key={s}
-                className={`h-2 flex-1 rounded-full transition-colors ${s <= step ? "bg-primary" : "bg-border"}`}
-              />
+              <div key={s} className="flex-1 flex flex-col gap-2">
+                <div
+                  className={`h-1.5 w-full rounded-full transition-all duration-500 ${
+                    s <= step
+                      ? "bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)]"
+                      : "bg-border"
+                  }`}
+                />
+                <span
+                  className={`text-[10px] font-bold uppercase ${
+                    s === step
+                      ? "text-primary"
+                      : "text-muted-foreground opacity-50"
+                  }`}
+                >
+                  Step {s}
+                </span>
+              </div>
             ))}
           </div>
-          <p className="mt-3 text-xs text-muted-foreground">Step {step} of 3</p>
         </div>
 
-        {/* Content */}
-        <div className="p-6">
-          {step === 1 && (
-            <div className="space-y-5">
-              <h3 className="font-semibold text-foreground">Patient Information</h3>
+        {/* Main Content Area */}
+        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+          <div className="max-w-md mx-auto h-full">
+            {step === 1 && (
+              <StepPatientInfo
+                data={formData}
+                onChange={handleInputChange}
+                onToggleMedical={() => setShowMedical(!showMedical)}
+                showMedical={showMedical}
+              />
+            )}
+            {step === 2 && (
+              <StepUploadImage
+                file={imageFile}
+                previewUrl={previewUrl}
+                onFileChange={handleFileChange}
+              />
+            )}
+            {step === 3 && (
+              <StepReview
+                data={formData}
+                file={imageFile}
+                previewUrl={previewUrl}
+                useLlm={useLlm}
+                onToggleLlm={setUseLlm}
+              />
+            )}
+          </div>
+        </div>
 
-              <div>
-                <Label htmlFor="patientName" className="text-sm font-medium text-foreground mb-2 block">
-                  Patient Name *
-                </Label>
-                <Input
-                  id="patientName"
-                  name="patientName"
-                  value={formData.patientName}
-                  onChange={handleInputChange}
-                  placeholder="Full name"
-                  className="bg-input border-border text-foreground"
-                />
-              </div>
+        {/* Sticky Footer */}
+        <div className="p-6 bg-card border-t border-border flex items-center justify-between gap-4 sticky bottom-0 z-10 shadow-[0_-8px_24px_rgba(0,0,0,0.05)]">
+          <div className="flex-1 flex gap-3">
+            {step > 1 && (
+              <Button
+                variant="outline"
+                onClick={() => setStep(step - 1)}
+                disabled={isLoading}
+                className="flex-1 h-12 gap-2 border-border hover:bg-muted transition-all"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Back
+              </Button>
+            )}
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="age" className="text-sm font-medium text-foreground mb-2 block">
-                    Age *
-                  </Label>
-                  <Input
-                    id="age"
-                    name="age"
-                    type="number"
-                    value={formData.age}
-                    onChange={handleInputChange}
-                    placeholder="Years"
-                    className="bg-input border-border text-foreground"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="gender" className="text-sm font-medium text-foreground mb-2 block">
-                    Gender *
-                  </Label>
-                  <select
-                    id="gender"
-                    name="gender"
-                    value={formData.gender}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 rounded-md border border-border bg-input text-foreground text-sm"
-                  >
-                    <option value="">Select</option>
-                    <option value="M">Male</option>
-                    <option value="F">Female</option>
-                    <option value="O">Other</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Medical History Collapsible */}
-              <div>
-                <button
-                  onClick={() => setShowMedicalHistory(!showMedicalHistory)}
-                  className="text-sm text-secondary hover:text-secondary/80 font-medium"
-                >
-                  {showMedicalHistory ? "▼" : "▶"} Add Medical History (optional)
-                </button>
-                {showMedicalHistory && (
-                  <textarea
-                    name="medicalHistory"
-                    value={formData.medicalHistory}
-                    onChange={handleInputChange}
-                    placeholder="Relevant history..."
-                    rows={3}
-                    className="mt-3 w-full px-3 py-2 rounded-md border border-border bg-input text-foreground text-sm"
-                  />
+            {step < 3 ? (
+              <Button
+                onClick={handleNext}
+                disabled={!validateStep(step)}
+                className="flex-[2px] h-12 gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all active:scale-95"
+              >
+                Continue
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                onClick={handleSubmit}
+                disabled={isLoading}
+                className="flex-[2px] h-12 gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl shadow-primary/25 transition-all active:scale-95"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {createdPatientId ? "Retrying Upload..." : "Finalizing..."}
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4" />
+                    {createdPatientId ? "Complete Upload" : "Start Analysis"}
+                  </>
                 )}
-              </div>
-            </div>
-          )}
-
-          {step === 2 && (
-            <div className="space-y-5">
-              <h3 className="font-semibold text-foreground">Upload Ultrasound Image</h3>
-
-              <div>
-                <label className="flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border bg-background/50 p-8 cursor-pointer transition-colors hover:border-secondary">
-                  <Upload className="h-8 w-8 text-secondary" />
-                  <div className="text-center">
-                    <p className="font-medium text-foreground">
-                      {formData.imageFile ? "File selected" : "Drag and drop or click to select"}
-                    </p>
-                    {formData.imageFile && (
-                      <p className="text-xs text-muted-foreground mt-1">{formData.imageFile.name}</p>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-2">PNG, JPG, DICOM up to 50MB</p>
-                  </div>
-                  <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
-                </label>
-              </div>
-
-              {formData.imageFile && (
-                <div className="rounded-lg border border-border bg-background/50 p-4">
-                  <p className="text-xs text-muted-foreground mb-2">Preview</p>
-                  <div className="aspect-square rounded-md bg-background flex items-center justify-center">
-                    <p className="text-muted-foreground text-sm">Image preview placeholder</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {step === 3 && (
-            <div className="space-y-5">
-              <h3 className="font-semibold text-foreground">Review & Confirm</h3>
-
-              <Card className="border-border bg-background/50 p-4 space-y-3">
-                <div>
-                  <p className="text-xs text-muted-foreground">Patient Name</p>
-                  <p className="font-medium text-foreground">{formData.patientName}</p>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Age</p>
-                    <p className="font-medium text-foreground">{formData.age} years</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Gender</p>
-                    <p className="font-medium text-foreground">{formData.gender}</p>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Image</p>
-                  <p className="font-medium text-foreground">{formData.imageFile?.name || "No image"}</p>
-                </div>
-              </Card>
-
-              <p className="text-xs text-muted-foreground">
-                Click confirm to start AI analysis. This typically takes 30-60 seconds.
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="sticky bottom-0 border-t border-border bg-card p-6 flex gap-3">
-          {step > 1 && (
-            <Button
-              variant="outline"
-              onClick={() => setStep(step - 1)}
-              className="border-border flex-1 flex items-center justify-center gap-2"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Back
-            </Button>
-          )}
-          {step < 3 ? (
-            <Button
-              onClick={() => setStep(step + 1)}
-              disabled={step === 1 ? !isStep1Valid : !isStep2Valid}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground flex-1 flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              Next
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          ) : (
-            <Button onClick={handleSubmit} className="bg-primary hover:bg-primary/90 text-primary-foreground flex-1">
-              Start Analysis
-            </Button>
-          )}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
-    </>
-  )
+    </div>
+  );
 }

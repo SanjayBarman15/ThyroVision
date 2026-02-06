@@ -1,56 +1,132 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { CheckCircle2 } from "lucide-react";
+import {
+  CheckCircle2,
+  ChevronDown,
+  Check,
+  X,
+  MessageSquare,
+  AlertCircle,
+} from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface FeedbackFormProps {
-  isLoading: boolean;
-  onSubmit: () => void;
+  predictionId: string;
+  existingFeedback?: any;
+  onSuccess?: () => void;
 }
 
 export default function FeedbackForm({
-  isLoading,
-  onSubmit,
+  predictionId,
+  existingFeedback,
+  onSuccess,
 }: FeedbackFormProps) {
-  const [feedback, setFeedback] = useState({
-    isCorrect: null as boolean | null,
-    correctTirads: "",
-    boundingBoxAccuracy: "" as string,
-    confidenceLevel: "" as string,
-    comments: "",
-  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [correctedTirads, setCorrectedTirads] = useState<number | null>(null);
+  const [comments, setComments] = useState("");
+  const [incorrectFeatures, setIncorrectFeatures] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = () => {
-    onSubmit();
-    // Simulate API call
-    setTimeout(() => {
+  const supabase = createClient();
+
+  // Initialize from existing feedback if provided
+  useEffect(() => {
+    if (existingFeedback) {
       setSubmitted(true);
-      setTimeout(() => {
-        setSubmitted(false);
-        setFeedback({
-          isCorrect: null,
-          correctTirads: "",
-          boundingBoxAccuracy: "",
-          confidenceLevel: "",
-          comments: "",
-        });
-      }, 2000);
-    }, 1000);
+      setIsCorrect(existingFeedback.is_correct);
+      setCorrectedTirads(existingFeedback.corrected_tirads);
+      setComments(existingFeedback.comments || "");
+      if (existingFeedback.corrected_features?.incorrect_fields) {
+        setIncorrectFeatures(
+          existingFeedback.corrected_features.incorrect_fields
+        );
+      }
+    }
+  }, [existingFeedback]);
+
+  const toggleFeature = (feature: string) => {
+    setIncorrectFeatures((prev) =>
+      prev.includes(feature)
+        ? prev.filter((f) => f !== feature)
+        : [...prev, feature]
+    );
+  };
+
+  const handleSubmit = async () => {
+    if (isCorrect === null) return;
+    if (isCorrect === false && correctedTirads === null) {
+      setError("Please select the correct TI-RADS level.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      const backendUrl =
+        process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+
+      const response = await fetch(
+        `${backendUrl}/predictions/${predictionId}/feedback`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            is_correct: isCorrect,
+            corrected_tirads: isCorrect ? null : correctedTirads,
+            corrected_features: isCorrect
+              ? null
+              : {
+                  incorrect_fields: incorrectFeatures,
+                },
+            comments: comments || null,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to submit feedback");
+      }
+
+      setSubmitted(true);
+      onSuccess?.();
+    } catch (err: any) {
+      setError(err.message || "An error occurred");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (submitted) {
     return (
-      <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-md p-4 flex items-center gap-3">
-        <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />
+      <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 flex items-center gap-3 animate-in fade-in zoom-in duration-300">
+        <div className="h-8 w-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+          <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+        </div>
         <div>
-          <p className="text-sm font-medium text-emerald-400">
-            Feedback recorded
+          <p className="text-sm font-semibold text-emerald-400">
+            Feedback Recorded
           </p>
-          <p className="text-xs text-emerald-500/70">
-            Thank you for your input.
+          <p className="text-xs text-emerald-500/60">
+            Thank you for helping us improve.
           </p>
         </div>
       </div>
@@ -58,99 +134,148 @@ export default function FeedbackForm({
   }
 
   return (
-    <div className="bg-secondary/10 rounded-lg p-4 border border-border/40">
-      <div className="mb-4">
-        <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+          <MessageSquare className="h-4 w-4 text-indigo-500" />
           Clinical Feedback
         </h3>
-        <p className="text-[10px] text-muted-foreground mt-1">
-          Validate the AI prediction to improve future accuracy.
-        </p>
+        <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-medium px-2 py-0.5 bg-secondary/30 rounded-full border border-border/50">
+          Improve Accuracy
+        </span>
       </div>
 
-      <div className="space-y-4">
-        {/* Classification Correctness */}
-        <div className="grid grid-cols-2 gap-4 items-center">
+      <div className="bg-secondary/10 rounded-xl p-4 border border-border/40 space-y-4 transition-all duration-300">
+        <div className="space-y-3">
           <p className="text-xs text-muted-foreground font-medium">
-            TIRADS Correct?
+            Was the AI prediction correct for this scan?
           </p>
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-3">
             <Button
-              variant={feedback.isCorrect === true ? "default" : "outline"}
+              variant="outline"
               size="sm"
-              onClick={() => setFeedback((f) => ({ ...f, isCorrect: true }))}
-              className={`h-7 text-xs flex-1 ${
-                feedback.isCorrect === true
-                  ? "bg-primary text-primary-foreground"
-                  : "border-border text-xs"
+              onClick={() => {
+                setIsCorrect(true);
+                setError(null);
+              }}
+              className={`h-10 rounded-lg border-2 transition-all ${
+                isCorrect === true
+                  ? "bg-emerald-500/10 border-emerald-500 text-emerald-500 hover:bg-emerald-500/20"
+                  : "border-border hover:bg-secondary/30"
               }`}
             >
-              Yes
+              <Check className="h-4 w-4 mr-2" />
+              Yes, Correct
             </Button>
             <Button
-              variant={feedback.isCorrect === false ? "default" : "outline"}
+              variant="outline"
               size="sm"
-              onClick={() => setFeedback((f) => ({ ...f, isCorrect: false }))}
-              className={`h-7 text-xs flex-1 ${
-                feedback.isCorrect === false
-                  ? "bg-primary text-primary-foreground"
-                  : "border-border text-xs"
+              onClick={() => {
+                setIsCorrect(false);
+                setError(null);
+              }}
+              className={`h-10 rounded-lg border-2 transition-all ${
+                isCorrect === false
+                  ? "bg-rose-500/10 border-rose-500 text-rose-500 hover:bg-rose-500/20"
+                  : "border-border hover:bg-secondary/30"
               }`}
             >
-              No
+              <X className="h-4 w-4 mr-2" />
+              No, Incorrect
             </Button>
           </div>
         </div>
 
-        {/* Detailed Fields - Only show if interacted or expanded logic could be used here, but keeping simple */}
+        {/* Conditional Fields */}
+        {isCorrect === false && (
+          <div className="space-y-4 pt-4 border-t border-dashed border-border/60 animate-in slide-in-from-top-2 duration-300">
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">
+                Correct TI-RADS Level
+              </label>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between h-10 border-border bg-background/50"
+                  >
+                    {correctedTirads ? `TR${correctedTirads}` : "Select Level"}
+                    <ChevronDown className="h-4 w-4 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-[calc(100vw-3rem)] max-w-[300px] bg-popover/95 backdrop-blur-sm border-border">
+                  {[1, 2, 3, 4, 5].map((val) => (
+                    <DropdownMenuItem
+                      key={val}
+                      onClick={() => setCorrectedTirads(val)}
+                      className="cursor-pointer hover:bg-primary/10"
+                    >
+                      TI-RADS {val}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
 
-        <div className="space-y-3 pt-2 border-t border-dashed border-border/40">
-          {/* Bounding Box Accuracy */}
-          <div>
-            <p className="text-[10px] uppercase text-muted-foreground mb-2 font-semibold">
-              Bounding Box Accuracy
-            </p>
-            <div className="flex gap-1.5">
-              {["Correct", "Partial", "Incorrect"].map((option) => (
-                <button
-                  key={option}
-                  onClick={() =>
-                    setFeedback((f) => ({ ...f, boundingBoxAccuracy: option }))
-                  }
-                  className={`px-3 py-1.5 rounded text-[10px] border transition-colors ${
-                    feedback.boundingBoxAccuracy === option
-                      ? "bg-secondary text-secondary-foreground border-secondary-foreground/20"
-                      : "bg-transparent text-muted-foreground border-border hover:bg-secondary/20"
-                  }`}
-                >
-                  {option}
-                </button>
-              ))}
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">
+                Incorrect Features (Optional)
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  "Composition",
+                  "Echogenicity",
+                  "Margins",
+                  "Calcifications",
+                  "Shape",
+                ].map((feature) => (
+                  <button
+                    key={feature}
+                    onClick={() => toggleFeature(feature)}
+                    className={`px-3 py-1.5 rounded-full text-[10px] border transition-all ${
+                      incorrectFeatures.includes(feature)
+                        ? "bg-rose-500/20 border-rose-500/50 text-rose-500"
+                        : "bg-background/50 border-border text-muted-foreground hover:border-muted-foreground/50"
+                    }`}
+                  >
+                    {feature}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">
+                Clinical Notes (Optional)
+              </label>
+              <textarea
+                value={comments}
+                onChange={(e) => setComments(e.target.value)}
+                placeholder="What did the AI miss?"
+                rows={3}
+                className="w-full px-3 py-2 rounded-lg border border-border bg-background/50 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none transition-all"
+              />
             </div>
           </div>
+        )}
 
-          {/* Comments - Optional */}
-          <div>
-            <textarea
-              value={feedback.comments}
-              onChange={(e) =>
-                setFeedback((f) => ({ ...f, comments: e.target.value }))
-              }
-              placeholder="Optional clinical notes..."
-              rows={2}
-              className="w-full px-3 py-2 rounded-md border border-border bg-background/50 text-foreground text-xs placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none"
-            />
+        {error && (
+          <div className="flex items-center gap-2 text-rose-500 bg-rose-500/10 p-2 rounded-lg border border-rose-500/20 animate-in fade-in duration-200">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <p className="text-[10px] font-medium leading-tight">{error}</p>
           </div>
-        </div>
+        )}
 
         <Button
           onClick={handleSubmit}
-          disabled={isLoading}
-          size="sm"
-          className="w-full bg-secondary hover:bg-secondary/80 text-secondary-foreground text-xs h-8 border border-secondary-foreground/10"
+          disabled={isSubmitting || isCorrect === null}
+          className={`w-full h-10 rounded-lg font-bold text-xs shadow-lg transition-all active:scale-[0.98] ${
+            isCorrect === null
+              ? "bg-secondary text-muted-foreground opacity-50"
+              : "bg-primary text-primary-foreground shadow-primary/20 hover:shadow-primary/30"
+          }`}
         >
-          {isLoading ? "Submitting..." : "Submit Review"}
+          {isSubmitting ? "Saving..." : "Submit Review"}
         </Button>
       </div>
     </div>
