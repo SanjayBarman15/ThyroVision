@@ -17,6 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { feedbackFormClasses } from "@/lib/colors";
 
 interface FeedbackFormProps {
   predictionId: string;
@@ -117,15 +118,15 @@ export default function FeedbackForm({
 
   if (submitted) {
     return (
-      <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 flex items-center gap-3 animate-in fade-in zoom-in duration-300">
-        <div className="h-8 w-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
-          <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+      <div className={`${feedbackFormClasses.success.container} rounded-xl p-4 flex items-center gap-3 animate-in fade-in zoom-in duration-300`}>
+        <div className={`h-8 w-8 rounded-full ${feedbackFormClasses.success.iconBg} flex items-center justify-center`}>
+          <CheckCircle2 className={`h-5 w-5 ${feedbackFormClasses.success.icon}`} />
         </div>
         <div>
-          <p className="text-sm font-semibold text-emerald-400">
+          <p className={`text-sm font-semibold ${feedbackFormClasses.success.title}`}>
             Feedback Recorded
           </p>
-          <p className="text-xs text-emerald-500/60">
+          <p className={`text-xs ${feedbackFormClasses.success.subtitle}`}>
             Thank you for helping us improve.
           </p>
         </div>
@@ -160,7 +161,7 @@ export default function FeedbackForm({
               }}
               className={`h-10 rounded-lg border-2 transition-all ${
                 isCorrect === true
-                  ? "bg-emerald-500/10 border-emerald-500 text-emerald-500 hover:bg-emerald-500/20"
+                  ? `${feedbackFormClasses.correct.bg} ${feedbackFormClasses.correct.border} ${feedbackFormClasses.correct.text} ${feedbackFormClasses.correct.hover}`
                   : "border-border hover:bg-secondary/30"
               }`}
             >
@@ -176,7 +177,7 @@ export default function FeedbackForm({
               }}
               className={`h-10 rounded-lg border-2 transition-all ${
                 isCorrect === false
-                  ? "bg-rose-500/10 border-rose-500 text-rose-500 hover:bg-rose-500/20"
+                  ? `${feedbackFormClasses.incorrect.bg} ${feedbackFormClasses.incorrect.border} ${feedbackFormClasses.incorrect.text} ${feedbackFormClasses.incorrect.hover}`
                   : "border-border hover:bg-secondary/30"
               }`}
             >
@@ -234,7 +235,7 @@ export default function FeedbackForm({
                     onClick={() => toggleFeature(feature)}
                     className={`px-3 py-1.5 rounded-full text-[10px] border transition-all ${
                       incorrectFeatures.includes(feature)
-                        ? "bg-rose-500/20 border-rose-500/50 text-rose-500"
+                        ? feedbackFormClasses.incorrectFeature.active
                         : "bg-background/50 border-border text-muted-foreground hover:border-muted-foreground/50"
                     }`}
                   >
@@ -260,7 +261,7 @@ export default function FeedbackForm({
         )}
 
         {error && (
-          <div className="flex items-center gap-2 text-rose-500 bg-rose-500/10 p-2 rounded-lg border border-rose-500/20 animate-in fade-in duration-200">
+          <div className={`flex items-center gap-2 ${feedbackFormClasses.error.text} ${feedbackFormClasses.error.container} p-2 rounded-lg border animate-in fade-in duration-200`}>
             <AlertCircle className="h-4 w-4 shrink-0" />
             <p className="text-[10px] font-medium leading-tight">{error}</p>
           </div>

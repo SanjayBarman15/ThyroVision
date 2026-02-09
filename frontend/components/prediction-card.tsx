@@ -9,6 +9,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { tiradsColors, getRiskLevelClass } from "@/lib/colors";
 
 interface PredictionCardProps {
   analysis: {
@@ -36,40 +37,27 @@ export default function PredictionCard({ analysis }: PredictionCardProps) {
     },
     tr1: {
       label: "TR1",
-      color: "#5DA686", // Muted Green
+      color: tiradsColors.tr1,
     },
     tr2: {
       label: "TR2",
-      color: "#9CAD60", // Muted Lime
+      color: tiradsColors.tr2,
     },
     tr3: {
       label: "TR3",
-      color: "#DBC059", // Muted Yellow
+      color: tiradsColors.tr3,
     },
     tr4: {
       label: "TR4",
-      color: "#D98A57", // Muted Orange
+      color: tiradsColors.tr4,
     },
     tr5: {
       label: "TR5",
-      color: "#C95D5D", // Muted Red
+      color: tiradsColors.tr5,
     },
   } satisfies ChartConfig;
 
-  const getRiskColor = (level: string) => {
-    switch (level.toLowerCase()) {
-      case "low":
-        return "bg-emerald-500/15 text-emerald-400 border-emerald-500/20";
-      case "moderate":
-        return "bg-amber-500/15 text-amber-400 border-amber-500/20";
-      case "high":
-        return "bg-orange-500/15 text-orange-400 border-orange-500/20";
-      default:
-        return "bg-slate-500/15 text-slate-400 border-slate-500/20";
-    }
-  };
-
-  const riskColorClass = getRiskColor(analysis.riskLevel);
+  const riskColorClass = getRiskLevelClass(analysis.riskLevel);
 
   return (
     <Card className="border-border bg-card overflow-hidden">

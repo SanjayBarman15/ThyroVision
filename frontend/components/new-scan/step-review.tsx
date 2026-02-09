@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { warningClasses } from "@/lib/colors";
 
 interface PatientData {
   first_name: string;
@@ -145,9 +146,9 @@ export const StepReview = ({
         </div>
       </div>
 
-      <div className="flex items-start gap-2 p-3 rounded-lg bg-orange-500/5 border border-orange-500/10">
-        <AlertCircle className="h-4 w-4 text-orange-500 mt-0.5" />
-        <p className="text-[11px] text-orange-600/80 leading-snug">
+      <div className={`flex items-start gap-2 p-3 rounded-lg ${warningClasses.container}`}>
+        <AlertCircle className={`h-4 w-4 ${warningClasses.icon} mt-0.5`} />
+        <p className={`text-[11px] ${warningClasses.text} leading-snug`}>
           AI generated content should be verified by a clinician. Rule-based
           analysis remains our primary diagnostic baseline.
         </p>

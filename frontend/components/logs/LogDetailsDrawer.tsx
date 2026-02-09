@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { errorClasses, successClasses } from "@/lib/colors";
 
 interface LogDetailsDrawerProps {
   log: SystemLog | null;
@@ -66,12 +67,12 @@ export function LogDetailsDrawer({
                     "FEEDBACK_OK",
                     "EXPORT_PDF_OK",
                   ].includes(log.error_code) ? (
-                    <div className="flex items-center gap-1.5 text-xs text-rose-600 bg-rose-50 px-2 py-1 rounded-full border border-rose-100 font-bold uppercase tracking-tight">
+                    <div className={`flex items-center gap-1.5 text-xs ${errorClasses.text} ${errorClasses.detailsContainer} px-2 py-1 rounded-full border font-bold uppercase tracking-tight`}>
                       <XCircle className="h-3.5 w-3.5" />
                       {log.error_code}
                     </div>
                   ) : (
-                    <div className="flex items-center gap-1.5 text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100 font-bold uppercase tracking-tight">
+                    <div className={`flex items-center gap-1.5 text-xs ${successClasses.text} ${successClasses.container} px-2 py-1 rounded-full border font-bold uppercase tracking-tight`}>
                       <CheckCircle2 className="h-3.5 w-3.5" />
                       {log.error_code || "OK"}
                     </div>
@@ -183,14 +184,14 @@ export function LogDetailsDrawer({
               {/* Error Details if any */}
               {(log.error_code || log.error_message) && (
                 <section>
-                  <h3 className="text-xs font-bold uppercase tracking-widest text-red-400 mb-3 flex items-center gap-2">
+                  <h3 className={`text-xs font-bold uppercase tracking-widest ${errorClasses.header} mb-3 flex items-center gap-2`}>
                     <AlertTriangle className="h-3.5 w-3.5" /> Error details
                   </h3>
-                  <div className="rounded-lg bg-red-50 p-4 border border-red-100">
-                    <div className="flex items-center gap-2 mb-2 font-mono text-xs font-bold text-red-700">
+                  <div className={`rounded-lg ${errorClasses.detailsContainer} p-4 border`}>
+                    <div className={`flex items-center gap-2 mb-2 font-mono text-xs font-bold ${errorClasses.detailsHeader}`}>
                       <span>[{log.error_code || "UNKNOWN_ERROR"}]</span>
                     </div>
-                    <p className="text-sm text-red-800 leading-relaxed">
+                    <p className={`text-sm ${errorClasses.detailsText} leading-relaxed`}>
                       {log.error_message || "No error message provided."}
                     </p>
                   </div>

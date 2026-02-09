@@ -4,6 +4,7 @@ import type React from "react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import { imageViewerColors } from "@/lib/colors";
 
 interface BoundingBox {
   x: number;
@@ -182,7 +183,7 @@ export default function ImageViewer({
         <div
           className="absolute inset-0 opacity-10 pointer-events-none"
           style={{
-            backgroundImage: "radial-gradient(#FFF 1px, transparent 1px)",
+            backgroundImage: `radial-gradient(${imageViewerColors.gridPattern} 1px, transparent 1px)`,
             backgroundSize: "40px 40px",
           }}
         />
@@ -207,8 +208,7 @@ export default function ImageViewer({
               <div
                 className="absolute inset-0 opacity-40"
                 style={{
-                  backgroundImage:
-                    "radial-gradient(circle at center, #1e293b 0%, #020617 100%)",
+                  backgroundImage: `radial-gradient(circle at center, ${imageViewerColors.backgroundGradient.start} 0%, ${imageViewerColors.backgroundGradient.end} 100%)`,
                 }}
               />
 
@@ -254,7 +254,7 @@ export default function ImageViewer({
             {imageMode === "processed" && boundingBox && (
               <div className="absolute inset-0 pointer-events-none z-20">
                 <div
-                  className="absolute border-2 border-emerald-500/80 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.3)] backdrop-blur-[0.5px]"
+                  className={`absolute border-2 ${imageViewerColors.boundingBox.border} ${imageViewerColors.boundingBox.bg} ${imageViewerColors.boundingBox.shadow} backdrop-blur-[0.5px]`}
                   style={{
                     left: `${(boundingBox.x / boundingBox.image_width) * 100}%`,
                     top: `${(boundingBox.y / boundingBox.image_height) * 100}%`,
@@ -262,7 +262,7 @@ export default function ImageViewer({
                     height: `${(boundingBox.height / boundingBox.image_height) * 100}%`,
                   }}
                 >
-                  <div className="absolute -top-6 left-0 bg-emerald-900/90 text-emerald-400 text-[10px] font-bold px-2 py-0.5 border border-emerald-500/40 rounded-sm whitespace-nowrap">
+                  <div className={`absolute -top-6 left-0 ${imageViewerColors.boundingBox.labelBg} ${imageViewerColors.boundingBox.labelText} text-[10px] font-bold px-2 py-0.5 border ${imageViewerColors.boundingBox.labelBorder} rounded-sm whitespace-nowrap`}>
                     TI-RADS DETECTED
                   </div>
                 </div>
@@ -316,8 +316,8 @@ export default function ImageViewer({
             onClick={() => onModeChange("processed")}
             className={`px-4 py-1.5 text-xs font-medium rounded-full transition-all duration-300 ${
               imageMode === "processed"
-                ? "bg-emerald-600 text-white shadow-[0_0_15px_rgba(5,150,105,0.4)]"
-                : "text-zinc-500 hover:text-zinc-300"
+                ? imageViewerColors.modeButton.active
+                : imageViewerColors.modeButton.inactive
             }`}
           >
             AI Analysis

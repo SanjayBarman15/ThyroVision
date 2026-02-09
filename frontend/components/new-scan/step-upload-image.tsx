@@ -4,6 +4,7 @@ import type React from "react";
 import { useState, useCallback } from "react";
 import { Label } from "@/components/ui/label";
 import { Upload, Image as ImageIcon } from "lucide-react";
+import { uploadStatusClasses } from "@/lib/colors";
 
 interface StepUploadImageProps {
   file: File | null;
@@ -65,8 +66,8 @@ export const StepUploadImage = ({
         <div
           className={`p-4 rounded-full transition-colors ${
             file
-              ? "bg-green-500/10 text-green-500"
-              : "bg-primary/10 text-primary"
+              ? uploadStatusClasses.success
+              : uploadStatusClasses.default
           }`}
         >
           <Upload className={`h-8 w-8 ${isDragging ? "animate-bounce" : ""}`} />

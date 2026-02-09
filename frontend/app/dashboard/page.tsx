@@ -164,42 +164,49 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-black relative">
+      {/* Background decorative elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-black rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-black rounded-full blur-3xl" />
+        {/* <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808005_1px,transparent_1px),linear-gradient(to_bottom,#80808005_1px,transparent_1px)] bg-size-[40px_40px]" /> */}
+      </div>
+
       {/* Header */}
-      <header className="border-b border-border bg-card sticky top-0 z-30">
+      <header className="sticky top-0 z-30 border-b border-border/50 bg-card/80 backdrop-blur-md shadow-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-primary/20 flex items-center justify-center">
-              <span className="text-primary font-bold">TS</span>
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-black flex items-center justify-center shadow-lg shadow-primary/10 border border-primary/20">
+              <span className="text-primary font-bold text-lg">TS</span>
             </div>
             <div>
-              <h1 className="text-lg font-bold text-foreground leading-none">
+              <h1 className="text-xl font-bold text-foreground leading-none tracking-tight">
                 ThyroSight
               </h1>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
-                Radiology Wigman
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mt-0.5">
+                Radiology Platform
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
             <div className="hidden sm:flex flex-col items-end">
-              <p className="text-sm font-medium text-foreground">
+              <p className="text-sm font-semibold text-foreground">
                 {doctorName || "Doctor"}
               </p>
               <p className="text-xs text-muted-foreground">
                 Senior Radiologist
               </p>
             </div>
-            <div className="h-8 w-px bg-border hidden sm:block" />
+            <div className="h-8 w-px bg-border/50 hidden sm:block" />
             <form action={signout}>
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-muted-foreground hover:text-foreground"
+                className="text-white bg-red-500 hover:text-white rounded-lg transition-all"
                 type="submit"
               >
                 <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
+                <span className="hidden sm:inline">Sign Out</span>
               </Button>
             </form>
           </div>
@@ -207,24 +214,28 @@ export default function DashboardPage() {
       </header>
 
       {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="relative z-10 mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Top Actions Row */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
-          <div>
-            <h2 className="text-2xl font-semibold text-foreground tracking-tight">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-6">
+          <div className="space-y-1">
+            <h2 className="text-3xl font-bold text-foreground tracking-tight">
               Dashboard Overview
             </h2>
-            <p className="text-sm text-muted-foreground">
-              Welcome back, {doctorName || "Doctor"}. You have{" "}
-              <span className="text-primary font-medium">
-                {stats.newScansCount} new analyses
-              </span>{" "}
-              today.
+            <p className="text-muted-foreground">
+              Welcome back, <span className="font-semibold text-foreground">{doctorName || "Doctor"}</span>. 
+              {stats.newScansCount > 0 && (
+                <> You have{" "}
+                  <span className="text-primary font-semibold">
+                    {stats.newScansCount} new {stats.newScansCount === 1 ? "analysis" : "analyses"}
+                  </span>{" "}
+                  today.</>
+              )}
+              {stats.newScansCount === 0 && " No new analyses today."}
             </p>
           </div>
           <Button
             onClick={() => setIsNewScanOpen(true)}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 px-6"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all hover:scale-105 active:scale-95 px-6 h-11 rounded-xl font-semibold"
           >
             <Plus className="h-5 w-5 mr-2" />
             Start New Scan
@@ -232,19 +243,21 @@ export default function DashboardPage() {
         </div>
 
         {/* Stats Strip */}
-        <StatsStrip
-          totalPatients={stats.totalPatients}
-          newScansCount={stats.newScansCount}
-        />
+        <div className="mb-8">
+          <StatsStrip
+            totalPatients={stats.totalPatients}
+            newScansCount={stats.newScansCount}
+          />
+        </div>
 
         {/* Patient List Section */}
-        <div className="space-y-4 max-h-[calc(100vh-300px)] overflow-y-auto custom-scrollbar pr-2">
+        <div className="bg-card/50 backdrop-blur-sm rounded-2xl border border-border/50 shadow-lg p-6">
           {/* List Controls / Smart Sorting */}
-          <div className="flex items-center justify-between border-b border-border pb-4">
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-foreground">Recent Scans</h3>
-              <span className="text-xs bg-secondary/50 text-secondary-foreground px-2 py-0.5 rounded-full">
-                {patients.length}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-border/50">
+            <div className="flex items-center gap-3">
+              <h3 className="text-lg font-bold text-foreground">Recent Scans</h3>
+              <span className="text-xs bg-primary/10 text-primary font-semibold px-3 py-1 rounded-full border border-primary/20">
+                {patients.length} {patients.length === 1 ? "patient" : "patients"}
               </span>
             </div>
 
@@ -252,33 +265,42 @@ export default function DashboardPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 text-xs text-muted-foreground hover:text-foreground"
+                className="h-9 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-lg transition-all"
               >
-                <Filter className="h-3 w-3 mr-1.5" /> Filter
+                <Filter className="h-3.5 w-3.5 mr-1.5" /> Filter
               </Button>
-              <div className="h-4 w-px bg-border" />
+              <div className="h-5 w-px bg-border/50" />
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 text-xs text-muted-foreground hover:text-foreground"
+                    className="h-9 text-xs text-muted-foreground  hover:text-white rounded-lg transition-all"
                   >
-                    <ArrowUpDown className="h-3 w-3 mr-1.5" /> Sort:{" "}
-                    <span className="text-foreground ml-1 font-medium capitalize">
+                    <ArrowUpDown className="h-3.5 w-3.5 mr-1.5" /> Sort:{" "}
+                    <span className="text-foreground ml-1 font-semibold capitalize">
                       {sortBy}
                     </span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setSortBy("urgency")}>
+                <DropdownMenuContent align="end" className="rounded-xl border-border/50">
+                  <DropdownMenuItem 
+                    onClick={() => setSortBy("urgency")}
+                    className="rounded-lg cursor-pointer"
+                  >
                     Urgency (High Risk first)
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortBy("recent")}>
+                  <DropdownMenuItem 
+                    onClick={() => setSortBy("recent")}
+                    className="rounded-lg cursor-pointer"
+                  >
                     Most Recent
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortBy("name")}>
+                  <DropdownMenuItem 
+                    onClick={() => setSortBy("name")}
+                    className="rounded-lg cursor-pointer"
+                  >
                     Patient Name
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -287,21 +309,23 @@ export default function DashboardPage() {
           </div>
 
           {/* List Content */}
-          {loading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-24 w-full rounded-lg" />
-              ))}
-            </div>
-          ) : sortedPatients.length > 0 ? (
-            <div className="space-y-3">
-              {sortedPatients.map((patient) => (
-                <PatientCard key={patient.id} patient={patient} />
-              ))}
-            </div>
-          ) : (
-            <EmptyState onAction={() => setIsNewScanOpen(true)} />
-          )}
+          <div className="max-h-[calc(100vh-450px)] overflow-y-auto custom-scrollbar pr-2">
+            {loading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-24 w-full rounded-xl" />
+                ))}
+              </div>
+            ) : sortedPatients.length > 0 ? (
+              <div className="space-y-3">
+                {sortedPatients.map((patient) => (
+                  <PatientCard key={patient.id} patient={patient} />
+                ))}
+              </div>
+            ) : (
+              <EmptyState onAction={() => setIsNewScanOpen(true)} />
+            )}
+          </div>
         </div>
       </main>
 
