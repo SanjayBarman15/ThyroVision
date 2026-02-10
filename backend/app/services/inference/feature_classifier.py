@@ -21,15 +21,13 @@ class MockFeatureClassifier:
         "shape": ["Wider-than-tall", "Taller-than-wide"],
     }
 
-    def classify(self, roi_image=None) -> Dict:
+    def classify(self, roi_input=None) -> Dict:
         """
         Simulate feature classification on a cropped ROI.
 
         Args:
-            roi_image: Cropped and resized ROI image (PIL Image).
-                       Expected size: (224, 224).
-                       Must contain the visual bounding box if model was trained with it.
-
+            roi_input: Cropped ROI input. Can be PIL Image (legacy) or torch.Tensor.
+                       Tensor shape: (3, 299, 299).
         Returns:
             Dict: Feature predictions + model metadata
         """
