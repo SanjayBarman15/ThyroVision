@@ -150,6 +150,7 @@ async def run_inference(
         "tirads_confidences": inference["tirads_confidences"],  # All class probabilities
         "model_version": inference["pipeline_version"],
         "model_metadata": inference["models"],
+        "explanation_metadata": inference["explanation_metadata"], # Save Grad-CAM & other metadata
         "inference_time_ms": inference["inference_time_ms"],
         "features": inference["features"],
         "bounding_box": inference["bounding_box"],
@@ -242,9 +243,16 @@ async def generate_prediction_explanation(
         )
 
     # 4️⃣ Store explanation in DB
+    # ⚠️ FIX: Merge with existing explanation_metadata to preserve Grad-CAM
+    existing_metadata = prediction.get("explanation_metadata") or {}
+    updated_metadata = {
+        **existing_metadata,
+        **result["explanation_metadata"]
+    }
+
     supabase_admin.table("predictions").update({
         "ai_explanation": result["ai_explanation"],
-        "explanation_metadata": result["explanation_metadata"]
+        "explanation_metadata": updated_metadata
     }).eq("id", str(prediction_id)).execute()
 
     # 5️⃣ Log explanation event

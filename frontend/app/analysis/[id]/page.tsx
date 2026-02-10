@@ -80,6 +80,18 @@ export default function AnalysisPage({
         console.log("🔍 Prediction Data Received:", predData);
 
         if (predData) {
+          // Extract clinical features and measurements from the new nested structure
+          const clinicalFeatures = predData.features?.clinical_features || {};
+          const measurements = predData.features?.measurements || {};
+
+          // Flatten features for the UI components that expect a simple Record<string, string>
+          const uiFeatures: Record<string, string> = {};
+          Object.entries(clinicalFeatures).forEach(
+            ([key, data]: [string, any]) => {
+              uiFeatures[key] = data.value;
+            },
+          );
+
           setAnalysis({
             tirads: `TR${predData.tirads}`,
             confidence: predData.confidence,
@@ -92,13 +104,10 @@ export default function AnalysisPage({
             explanation:
               predData.ai_explanation ||
               `Nodule analysis complete. TI-RADS ${predData.tirads} assigned.`,
-            features: predData.features || {
-              composition: "N/A",
-              echogenicity: "N/A",
-              margins: "N/A",
-              calcifications: "N/A",
-              shape: "N/A",
-            },
+            features: uiFeatures,
+            clinicalFeatures: clinicalFeatures, // Pass detailed features
+            measurements: measurements, // Pass measurements
+            tiradsConfidences: predData.tirads_confidences, // Pass real distribution
             boundingBox: predData.bounding_box,
             predictionId: predData.id,
             modelVersion: predData.model_version,

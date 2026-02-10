@@ -30,6 +30,8 @@ env/
 # *.hdf5
 *.pth
 *.pt
+*.jpg
+*.xml
 # =====================
 # Frontend (Next.js / Node)
 # =====================

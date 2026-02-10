@@ -16,19 +16,41 @@ interface PredictionCardProps {
     tirads: string;
     confidence: number;
     riskLevel: string;
+    tiradsConfidences?: Record<string, number>;
   };
 }
 
 export default function PredictionCard({ analysis }: PredictionCardProps) {
   const [showDistribution, setShowDistribution] = useState(false);
 
-  // Hardcoded data based on mock_json_output.json
+  // Use real data from backend or fallback to empty distribution
+  const confidences = analysis.tiradsConfidences || {};
   const chartData = [
-    { category: "TR1", probability: 0.012, fill: "var(--color-tr1)" },
-    { category: "TR2", probability: 0.038, fill: "var(--color-tr2)" },
-    { category: "TR3", probability: 0.076, fill: "var(--color-tr3)" },
-    { category: "TR4", probability: 0.847, fill: "var(--color-tr4)" },
-    { category: "TR5", probability: 0.027, fill: "var(--color-tr5)" },
+    {
+      category: "TR1",
+      probability: confidences.TIRADS_1 || 0,
+      fill: "var(--color-tr1)",
+    },
+    {
+      category: "TR2",
+      probability: confidences.TIRADS_2 || 0,
+      fill: "var(--color-tr2)",
+    },
+    {
+      category: "TR3",
+      probability: confidences.TIRADS_3 || 0,
+      fill: "var(--color-tr3)",
+    },
+    {
+      category: "TR4",
+      probability: confidences.TIRADS_4 || 0,
+      fill: "var(--color-tr4)",
+    },
+    {
+      category: "TR5",
+      probability: confidences.TIRADS_5 || 0,
+      fill: "var(--color-tr5)",
+    },
   ];
 
   const chartConfig = {
@@ -86,37 +108,37 @@ export default function PredictionCard({ analysis }: PredictionCardProps) {
         </div>
 
         <div className="space-y-1.5">
-  <span className="text-xs text-muted-foreground font-medium">
-    Model Confidence
-  </span>
+          <span className="text-xs text-muted-foreground font-medium">
+            Model Confidence
+          </span>
 
-  <div className="h-6 w-full bg-secondary/30 rounded-full overflow-hidden relative">
-    <div
-      className={`
+          <div className="h-6 w-full bg-secondary/30 rounded-full overflow-hidden relative">
+            <div
+              className={`
         h-full flex items-center justify-end px-4
         transition-all duration-500
         ${
           analysis.confidence * 100 < 10
             ? "bg-red-800"
             : analysis.confidence * 100 <= 25
-            ? "bg-red-700"
-            : analysis.confidence * 100 <= 35
-            ? "bg-red-400"
-            : analysis.confidence * 100 <= 50
-            ? "bg-yellow-400"
-            : analysis.confidence * 100 <= 75
-            ? "bg-green-600"
-            : "bg-green-800"
+              ? "bg-red-700"
+              : analysis.confidence * 100 <= 35
+                ? "bg-red-400"
+                : analysis.confidence * 100 <= 50
+                  ? "bg-yellow-400"
+                  : analysis.confidence * 100 <= 75
+                    ? "bg-green-600"
+                    : "bg-green-800"
         }
       `}
-      style={{ width: `${analysis.confidence * 100}%` }}
-    >
-      <span className="text-[10px] font-bold text-white font-mono leading-none">
-        {Math.round(analysis.confidence * 100)}%
-      </span>
-    </div>
-  </div>
-</div>
+              style={{ width: `${analysis.confidence * 100}%` }}
+            >
+              <span className="text-[10px] font-bold text-white font-mono leading-none">
+                {Math.round(analysis.confidence * 100)}%
+              </span>
+            </div>
+          </div>
+        </div>
 
         <div className="pt-2">
           <button
@@ -167,8 +189,3 @@ export default function PredictionCard({ analysis }: PredictionCardProps) {
     </Card>
   );
 }
-
-
-
-
-
