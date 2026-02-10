@@ -2,6 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Users, AlertTriangle, FileInput, MessageSquare } from "lucide-react";
+import { statsCardClasses } from "@/lib/colors";
 
 interface StatsStripProps {
   totalPatients: number;
@@ -18,32 +19,32 @@ export default function StatsStrip({
       value: totalPatients.toLocaleString(),
       icon: Users,
       trend: "+12%", // Mock trend for now
-      color: "text-blue-500",
-      bg: "bg-blue-500/10",
+      color: statsCardClasses.totalPatients.text,
+      bg: statsCardClasses.totalPatients.bg,
     },
     {
       label: "High Risk (TR4-5)",
       value: "14",
       icon: AlertTriangle,
       trend: "+2",
-      color: "text-orange-500",
-      bg: "bg-orange-500/10",
+      color: statsCardClasses.highRisk.text,
+      bg: statsCardClasses.highRisk.bg,
     },
     {
       label: "New Scans (24h)",
       value: newScansCount.toString(),
       icon: FileInput,
       trend: "New",
-      color: "text-emerald-500",
-      bg: "bg-emerald-500/10",
+      color: statsCardClasses.newScans.text,
+      bg: statsCardClasses.newScans.bg,
     },
     {
       label: "Pending Feedback",
       value: "5",
       icon: MessageSquare,
       trend: "-2",
-      color: "text-indigo-500",
-      bg: "bg-indigo-500/10",
+      color: statsCardClasses.pendingFeedback.text,
+      bg: statsCardClasses.pendingFeedback.bg,
     },
   ];
 
