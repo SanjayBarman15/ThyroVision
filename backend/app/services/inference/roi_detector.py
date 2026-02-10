@@ -1,102 +1,156 @@
-# Faster R-CNN + ResNet50 (mock)
-import random
-from typing import Dict
+import os
+import torch
+import torchvision
+from torchvision.models.detection import FasterRCNN_ResNet50_FPN_Weights
+from typing import Dict, Optional
+import numpy as np
+from dotenv import load_dotenv
 
-class MockROIDetector:
+# Import preprocessing from the nearby service
+from app.services.preprocessing.bbox_preprocessing import detection_preprocess_from_array
+
+class FasterRCNNDetector:
     """
-    Mock Faster R-CNN ROI detector.
-    Outputs bounding box in Pascal VOC format:
-    (xmin, ymin, xmax, ymax)
+    Real Faster R-CNN ROI detector using ResNet101 backbone.
+    (Singleton Pattern to avoid reloading model)
     """
 
-    MODEL_NAME = "faster-rcnn + resnet50"
-    MODEL_VERSION = "mock-fasterrcnn-resnet50-v1"
+    MODEL_NAME = "Faster R-CNN + ResNet101"
+    MODEL_VERSION = "resnet101-thyroid-v1"
+    
+    _instance = None
+    _model = None
 
-    def detect(self, image_width: int, image_height: int) -> Dict:
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(FasterRCNNDetector, cls).__new__(cls)
+        return cls._instance
+
+    def __init__(self, model_path: str = None):
+        # Only initialize once
+        if self._model is None:
+            # Explicitly load .env to ensure model path is available
+            load_dotenv(override=True)
+            
+            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            self.model_path = model_path or os.getenv("FASTER_RCNN_MODEL_PATH")
+            self._model = self._load_model()
+            self._model.eval()
+
+    def _load_model(self):
+        """Simple model instantiator - using 2 classes (Background + Nodule)"""
+        if not self.model_path:
+            print("❌ Error: FASTER_RCNN_MODEL_PATH not found in environment.")
+            # We must have a valid path to load the real model
+            raise RuntimeError("FASTER_RCNN_MODEL_PATH is missing. Cannot perform real detection.")
+        
+        print(f"🚀 Initializing Faster R-CNN (Backbone: ResNet101)")
+        print(f"📂 Weights Path: {self.model_path}")
+
+        if not os.path.exists(self.model_path):
+             raise FileNotFoundError(f"Faster R-CNN model file not found at {self.model_path}")
+        
+        # Determine model architecture
+        # Most ResNet101 Faster R-CNNs in torchvision use this entry point
+        if hasattr(torchvision.models.detection, 'fasterrcnn_resnet101_fpn'):
+            model = torchvision.models.detection.fasterrcnn_resnet101_fpn(num_classes=2)
+        else:
+            # If not direct, we build it with a resnet101 backbone
+            from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
+            from torchvision.models.detection import FasterRCNN
+            backbone = resnet_fpn_backbone('resnet101', weights=None)
+            model = FasterRCNN(backbone, num_classes=2)
+
+        if os.path.exists(self.model_path):
+            state_dict = torch.load(self.model_path, map_location=self.device)
+            # Support both raw state_dicts and wrapped ones
+            if "model_state_dict" in state_dict:
+                state_dict = state_dict["model_state_dict"]
+            elif "state_dict" in state_dict:
+                state_dict = state_dict["state_dict"]
+                
+            model.load_state_dict(state_dict, strict=False)
+            print("✅ Faster R-CNN model loaded.")
+        else:
+            raise FileNotFoundError(f"Faster R-CNN model file not found at {self.model_path}")
+            
+        return model.to(self.device)
+
+    @torch.no_grad()
+    def detect(self, image_array: np.ndarray) -> Dict:
         """
-        Simulate ROI detection on a raw ultrasound image.
-        Returns the best bounding box after filtering.
-
-        Args:
-            image_width (int): Width of the raw image
-            image_height (int): Height of the raw image
-
-        Returns:
-            Dict: Bounding box metadata
+        Run detection on a single image.
         """
-
-        # ---------------------------------------------------------
-        # 1. Simulate Raw Model Output
-        #    Faster R-CNN returns: Dict[Tensor]
-        #    - boxes: [N, 4] (xmin, ymin, xmax, ymax)
-        #    - scores: [N] (0.0 to 1.0)
-        #    - labels: [N] (int class IDs)
-        # ---------------------------------------------------------
+        h_orig, w_orig = image_array.shape[:2]
         
-        # We simulate N random detections
-        num_detections = random.randint(3, 8)
-        raw_outputs = []
-        
-        for _ in range(num_detections):
-            # Random box size (10% to 30% of image)
-            w_box = int(image_width * random.uniform(0.1, 0.3))
-            h_box = int(image_height * random.uniform(0.1, 0.3))
-            
-            x_min = random.randint(0, max(0, image_width - w_box))
-            y_min = random.randint(0, max(0, image_height - h_box))
-            x_max = x_min + w_box
-            y_max = y_min + h_box
-            
-            score = random.uniform(0.0, 0.99) # Spread scores
-            label = 1 # Example class ID
-            
-            raw_outputs.append({
-                "box": [x_min, y_min, x_max, y_max],
-                "score": score,
-                "label": label
-            })
+        # 1. Preprocess (CLAHE + Normalize)
+        # Returns Tensor (3, H, W)
+        tensor = detection_preprocess_from_array(image_array).to(self.device).unsqueeze(0)
 
-        # ---------------------------------------------------------
-        # 2. Post-Processing (The "Glue" Code)
-        # ---------------------------------------------------------
+        # 2. Forward pass
+        outputs = self._model(tensor)[0]
         
-        # A. Score Threshold Filtering
-        SCORE_THRESHOLD = 0.5
-        filtered_detections = [
-            d for d in raw_outputs 
-            if d["score"] >= SCORE_THRESHOLD
-        ]
+        boxes = outputs["boxes"]
+        scores = outputs["scores"]
+
+        if len(scores) == 0:
+            print("⚠️ Detection failed: No boxes found by model.")
+            # Fallback to full image if nothing detected (safe default)
+            return self._format_fallback(w_orig, h_orig)
+
+        # 3. Pick highest confidence box
+        max_idx = scores.argmax()
+        max_score = scores[max_idx].item()
         
-        # Fallback if no boxes found (for mock purposes, force one)
-        if not filtered_detections:
-            filtered_detections = raw_outputs[:1]
-            if not filtered_detections: # Should be impossible given loop above but safe
-                 filtered_detections.append({
-                    "box": [0, 0, 100, 100], "score": 0.1, "label": 1
-                })
+        print(f"🎯 Detection successful. Max score: {max_score:.4f}")
 
-        # B. Select Best Box (Highest Score)
-        # In a real app, you might use NMS (Non-Max Suppression) here if multiple boxes overlap
-        best_detection = max(filtered_detections, key=lambda x: x["score"])
+        # Threshold check
+        CONF_THRESHOLD = 0.5
+        if max_score < CONF_THRESHOLD:
+            print(f"⚠️ Confidence too low ({max_score:.4f} < {CONF_THRESHOLD}). Using fallback.")
+            return self._format_fallback(w_orig, h_orig)
 
-        # C. Format for Pipeline
-        # Extract xyxy coordinates
-        xmin, ymin, xmax, ymax = best_detection["box"]
+        bbox = boxes[max_idx].cpu().numpy()
+        xmin, ymin, xmax, ymax = bbox
 
         return {
             "bounding_box": {
-                "xmin": xmin,
-                "ymin": ymin,
-                "xmax": xmax,
-                "ymax": ymax,
+                "xmin": float(xmin),
+                "ymin": float(ymin),
+                "xmax": float(xmax),
+                "ymax": float(ymax),
             },
-            "score": best_detection["score"],
-            "image_width": image_width,
-            "image_height": image_height,
-            "format": "pascal_voc", # Explicitly stating xyxy
+            "score": float(max_score),
+            "image_width": w_orig,
+            "image_height": h_orig,
+            "format": "pascal_voc",
             "coordinate_space": "raw_image",
             "detector": {
                 "name": self.MODEL_NAME,
                 "version": self.MODEL_VERSION,
             },
+        }
+
+    def _format_fallback(self, w, h):
+        """Returns a whole-image crop if detection fails."""
+        return {
+            "bounding_box": {"xmin": 0, "ymin": 0, "xmax": w, "ymax": h},
+            "score": 0.0,
+            "image_width": w,
+            "image_height": h,
+            "format": "pascal_voc",
+            "coordinate_space": "raw_image",
+            "detector": {"name": self.MODEL_NAME, "version": "fallback"}
+        }
+
+    def _format_fallback(self, w, h):
+        """Returns a whole-image crop if detection fails."""
+        return {
+            "bounding_box": {"xmin": 0, "ymin": 0, "xmax": w, "ymax": h},
+            "score": 0.0,
+            "image_width": w,
+            "image_height": h,
+            "format": "pascal_voc",
+            "coordinate_space": "raw_image",
+            "detector": {"name": self.MODEL_NAME, "version": "fallback"}
         }
