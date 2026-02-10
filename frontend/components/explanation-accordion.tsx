@@ -8,6 +8,8 @@ interface ExplanationAccordionProps {
   analysis: {
     explanation: string;
     features: Record<string, string>;
+    clinicalFeatures?: Record<string, any>;
+    measurements?: Record<string, any>;
     modelVersion?: string;
     inferenceTime?: number;
   };
@@ -19,6 +21,21 @@ export default function ExplanationAccordion({
   const [isOpen, setIsOpen] = useState(true);
   const showTechnicalDetails =
     process.env.NEXT_PUBLIC_AI_SHOW_TECHNICAL_DETAILS === "true";
+
+  // Use clinicalFeatures if available for richer data (points/descriptions)
+  const featuresToDisplay = analysis.clinicalFeatures
+    ? Object.entries(analysis.clinicalFeatures).map(([key, data]) => ({
+        key,
+        value: data.value,
+        points: data.points,
+        description: data.description,
+      }))
+    : Object.entries(analysis.features).map(([key, value]) => ({
+        key,
+        value,
+        points: null,
+        description: null,
+      }));
 
   return (
     <Card className="border-border bg-card overflow-hidden">
@@ -46,24 +63,66 @@ export default function ExplanationAccordion({
 
           <div className="pt-2">
             <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-3">
-              Detected Features
+              Clinical Features
             </p>
             <div className="grid grid-cols-1 gap-y-2">
-              {Object.entries(analysis.features).map(([key, value]) => (
-                <div key={key} className="flex items-start text-sm group">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary/40 mt-1.5 mr-2.5 group-hover:bg-primary transition-colors" />
-                  <div className="flex-1 flex justify-between border-b border-dashed border-border/40 pb-1">
-                    <span className="text-muted-foreground capitalize font-medium text-xs">
-                      {key.replace(/([A-Z])/g, " $1")}
-                    </span>
-                    <span className="font-medium text-foreground text-xs">
-                      {value}
-                    </span>
+              {featuresToDisplay.map((item) => (
+                <div key={item.key} className="flex flex-col text-sm group">
+                  <div className="flex items-start">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary/40 mt-1.5 mr-2.5 group-hover:bg-primary transition-colors" />
+                    <div className="flex-1 flex justify-between border-b border-dashed border-border/40 pb-1">
+                      <span className="text-muted-foreground capitalize font-medium text-xs">
+                        {item.key.replace(/([A-Z])/g, " $1")}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-foreground text-xs">
+                          {item.value}
+                        </span>
+                        {item.points !== null && (
+                          <span className="text-[10px] bg-secondary/50 px-1.5 rounded text-muted-foreground">
+                            +{item.points} pts
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
+                  {item.description && (
+                    <p className="text-[10px] text-muted-foreground/70 ml-4 mt-0.5 italic">
+                      {item.description}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
           </div>
+
+          {analysis.measurements &&
+            Object.keys(analysis.measurements).length > 0 && (
+              <div className="pt-2 border-t border-border/40 mt-4">
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-3">
+                  Measurements
+                </p>
+                <div className="grid grid-cols-1 gap-y-2">
+                  {Object.entries(analysis.measurements).map(([key, value]) => (
+                    <div
+                      key={key}
+                      className="flex items-center justify-between text-xs"
+                    >
+                      <span className="text-muted-foreground capitalize">
+                        {key.replace(/_/g, " ")}
+                      </span>
+                      <span className="font-mono text-foreground font-medium">
+                        {typeof value === "number"
+                          ? key.includes("area")
+                            ? `${(value * 100).toFixed(2)}%`
+                            : value.toFixed(2)
+                          : value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
           {showTechnicalDetails &&
             (analysis.modelVersion || analysis.inferenceTime) && (

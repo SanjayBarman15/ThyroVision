@@ -150,6 +150,7 @@ async def run_inference(
         "tirads_confidences": inference["tirads_confidences"],  # All class probabilities
         "model_version": inference["pipeline_version"],
         "model_metadata": inference["models"],
+        "explanation_metadata": inference["explanation_metadata"], # Save Grad-CAM & other metadata
         "inference_time_ms": inference["inference_time_ms"],
         "features": inference["features"],
         "bounding_box": inference["bounding_box"],
