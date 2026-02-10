@@ -229,7 +229,7 @@ export default function DashboardPage() {
           </div>
           <Button
             onClick={() => setIsNewScanOpen(true)}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all hover:scale-105 active:scale-95 px-6 h-11 rounded-xl font-semibold"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground   transition-all hover:scale-105 active:scale-95 px-6 h-11 rounded-xl font-semibold"
           >
             <Plus className="h-5 w-5 mr-2" />
             Start New Scan
