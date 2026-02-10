@@ -1,4 +1,5 @@
-# Feature Image preprocessing functions
+# xception_preprocess.py
+
 """
 Xception Preprocessing for PyTorch
 ===================================
