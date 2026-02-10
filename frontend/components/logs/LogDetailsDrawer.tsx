@@ -1,31 +1,24 @@
-// frontend/components/logs/LogDetailsDrawer.tsx
 "use client";
 
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
 } from "@/components/ui/sheet";
 import { SystemLog } from "@/types/logs";
-import { LogLevelBadge, ActionBadge } from "./LogBadges";
+import { ActionBadge } from "./LogBadges";
 import { format } from "date-fns";
 import {
-  CheckCircle2,
-  XCircle,
   Copy,
   Clock,
   User,
   HardDrive,
   Hash,
   AlertTriangle,
+  CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { errorClasses, successClasses } from "@/lib/colors";
 
 interface LogDetailsDrawerProps {
   log: SystemLog | null;
@@ -40,181 +33,185 @@ export function LogDetailsDrawer({
 }: LogDetailsDrawerProps) {
   if (!log) return null;
 
-  const copyToClipboard = (text: string, label: string) => {
+  const copy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
-    toast.success(`${label} copied to clipboard`);
+    toast.success(`${label} copied`);
   };
 
-  const formattedDate = format(new Date(log.created_at), "PPPP");
-  const formattedTime = format(new Date(log.created_at), "HH:mm:ss.SSS (xxx)");
+  const isError =
+    log.error_code &&
+    ![
+      "OK",
+      "PATIENT_CREATED",
+      "UPLOAD_OK",
+      "INFERENCE_OK",
+      "EXPLANATION_OK",
+      "FEEDBACK_OK",
+      "EXPORT_PDF_OK",
+    ].includes(log.error_code);
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-[400px] sm:w-[540px] p-0 border-l border-slate-200">
+      <SheetContent className="w-[420px] sm:w-[560px] p-0 bg-slate-50 border-l border-black/10">
         <ScrollArea className="h-full">
-          <div className="p-6">
-            <SheetHeader className="space-y-4 mb-6">
-              <div className="flex items-center justify-between">
-                <LogLevelBadge level={log.level} className="text-xs px-3" />
-                <div className="flex items-center gap-2">
-                  {log.error_code &&
-                  ![
-                    "OK",
-                    "PATIENT_CREATED",
-                    "UPLOAD_OK",
-                    "INFERENCE_OK",
-                    "EXPLANATION_OK",
-                    "FEEDBACK_OK",
-                    "EXPORT_PDF_OK",
-                  ].includes(log.error_code) ? (
-                    <div className={`flex items-center gap-1.5 text-xs ${errorClasses.text} ${errorClasses.detailsContainer} px-2 py-1 rounded-full border font-bold uppercase tracking-tight`}>
-                      <XCircle className="h-3.5 w-3.5" />
-                      {log.error_code}
-                    </div>
-                  ) : (
-                    <div className={`flex items-center gap-1.5 text-xs ${successClasses.text} ${successClasses.container} px-2 py-1 rounded-full border font-bold uppercase tracking-tight`}>
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      {log.error_code || "OK"}
-                    </div>
-                  )}
-                </div>
+          <div className="p-6 space-y-8">
+
+            {/* Header */}
+            <header className="space-y-3">
+              <div className="flex items-center gap-2">
+                {isError ? (
+                  <AlertTriangle className="h-4 w-4 text-red-500" />
+                ) : (
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                )}
+                <span className="text-xs font-semibold uppercase text-slate-500">
+                  {log.level}
+                </span>
               </div>
+
+              <h2 className="text-lg font-semibold text-slate-900 leading-snug">
+                {log.message}
+              </h2>
+
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <ActionBadge action={log.action} />
+                <span>•</span>
+                <code className="font-mono text-indigo-600">
+                  {log.id}
+                </code>
+              </div>
+            </header>
+
+            {/* Timing */}
+            <section className="rounded-xl bg-white p-4 flex items-center gap-3 shadow-sm border border-black/10">
+              <Clock className="h-4 w-4 text-indigo-800" />
               <div>
-                <SheetTitle className="text-xl font-semibold text-slate-900 leading-tight">
-                  {log.message}
-                </SheetTitle>
-                <SheetDescription className="mt-2 flex items-center gap-2">
-                  <ActionBadge action={log.action} />
-                  <span className="text-slate-400">•</span>
-                  <span className="text-xs text-slate-500 font-mono tracking-tighter">
-                    {log.id}
-                  </span>
-                </SheetDescription>
+                <p className="text-sm font-medium text-black">
+                  {format(new Date(log.created_at), "PPPP")}
+                </p>
+                <p className="text-xs font-mono text-slate-800">
+                  {format(new Date(log.created_at), "HH:mm:ss.SSS")}
+                </p>
               </div>
-            </SheetHeader>
+            </section>
 
-            <div className="space-y-6">
-              {/* Timing Section */}
-              <section>
-                <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-2">
-                  <Clock className="h-3.5 w-3.5" /> Timing
-                </h3>
-                <div className="rounded-lg bg-slate-50 p-3 border border-slate-100">
-                  <p className="text-sm font-medium text-slate-700">
-                    {formattedDate}
-                  </p>
-                  <p className="text-xs text-slate-500 font-mono mt-1">
-                    {formattedTime}
-                  </p>
-                </div>
+            {/* Actor & Resource */}
+            <section className="grid grid-cols-2 gap-6">
+              <InfoBlock
+                icon={<User className="text-indigo-500" />}
+                title="Actor"
+                value={log.actor_role}
+                id={log.actor_id}
+                onCopy={() => copy(log.actor_id!, "Actor ID")}
+              />
+              <InfoBlock
+                icon={<HardDrive className="text-indigo-500" />}
+                title="Resource"
+                value={log.resource_type}
+                id={log.resource_id}
+                onCopy={() => copy(log.resource_id!, "Resource ID")}
+              />
+            </section>
+
+            {/* Request ID */}
+            <section className="space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase text-slate-800">
+                <Hash className="h-3.5 w-3.5 text-indigo-500" />
+                Request ID
+              </div>
+              <div className="flex items-center justify-between rounded-lg bg-indigo-50 px-3 py-2 border border-black/10">
+                <code className="text-xs font-mono text-indigo-700">
+                  {log.request_id}
+                </code>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => copy(log.request_id, "Request ID")}
+                >
+                  <Copy className="h-4 w-4 text-indigo-500" />
+                </Button>
+              </div>
+            </section>
+
+            {/* Error */}
+            {isError && (
+              <section className="rounded-xl bg-red-50 p-4 space-y-2 border border-red-200">
+                <p className="text-sm font-semibold text-red-600">
+                  {log.error_code}
+                </p>
+                <p className="text-sm text-red-700 leading-relaxed">
+                  {log.error_message}
+                </p>
               </section>
+            )}
 
-              {/* Actor & Resource Section */}
-              <section className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-2">
-                    <User className="h-3.5 w-3.5" /> Actor
-                  </h3>
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold capitalize text-slate-700">
-                      {log.actor_role || "Unknown Role"}
-                    </p>
-                    <p className="text-xs text-slate-500 font-mono flex items-center gap-1">
-                      {log.actor_id || "N/A"}
-                      {log.actor_id && (
-                        <button
-                          onClick={() =>
-                            copyToClipboard(log.actor_id!, "Actor ID")
-                          }
-                          className="text-slate-300 hover:text-slate-600"
-                        >
-                          <Copy className="h-3 w-3" />
-                        </button>
-                      )}
-                    </p>
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-2">
-                    <HardDrive className="h-3.5 w-3.5" /> Resource
-                  </h3>
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold capitalize text-slate-700">
-                      {log.resource_type || "No Resource"}
-                    </p>
-                    <p className="text-xs text-slate-500 font-mono flex items-center gap-1">
-                      {log.resource_id || "N/A"}
-                      {log.resource_id && (
-                        <button
-                          onClick={() =>
-                            copyToClipboard(log.resource_id!, "Resource ID")
-                          }
-                          className="text-slate-300 hover:text-slate-600"
-                        >
-                          <Copy className="h-3 w-3" />
-                        </button>
-                      )}
-                    </p>
-                  </div>
-                </div>
-              </section>
-
-              {/* Request Context */}
-              <section>
-                <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-2">
-                  <Hash className="h-3.5 w-3.5" /> Request Context
-                </h3>
-                <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-white">
-                  <code className="text-xs font-mono text-slate-600">
-                    {log.request_id}
-                  </code>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-slate-400"
-                    onClick={() =>
-                      copyToClipboard(log.request_id, "Request ID")
-                    }
-                  >
-                    <Copy className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </section>
-
-              {/* Error Details if any */}
-              {(log.error_code || log.error_message) && (
-                <section>
-                  <h3 className={`text-xs font-bold uppercase tracking-widest ${errorClasses.header} mb-3 flex items-center gap-2`}>
-                    <AlertTriangle className="h-3.5 w-3.5" /> Error details
-                  </h3>
-                  <div className={`rounded-lg ${errorClasses.detailsContainer} p-4 border`}>
-                    <div className={`flex items-center gap-2 mb-2 font-mono text-xs font-bold ${errorClasses.detailsHeader}`}>
-                      <span>[{log.error_code || "UNKNOWN_ERROR"}]</span>
-                    </div>
-                    <p className={`text-sm ${errorClasses.detailsText} leading-relaxed`}>
-                      {log.error_message || "No error message provided."}
-                    </p>
-                  </div>
-                </section>
-              )}
-
-              <Separator className="bg-slate-100" />
-
-              {/* Metadata JSON */}
-              <section>
-                <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">
+            {/* Metadata */}
+            <section className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase text-slate-800">
                   Metadata
-                </h3>
-                <div className="rounded-lg bg-slate-900 p-4 overflow-hidden">
-                  <pre className="text-xs font-mono text-slate-300 leading-relaxed whitespace-pre-wrap break-all">
-                    {JSON.stringify(log.metadata, null, 2)}
-                  </pre>
-                </div>
-              </section>
-            </div>
+                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    copy(JSON.stringify(log.metadata, null, 2), "Metadata JSON")
+                  }
+                  className="text-slate-800 hover:text-indigo-600"
+                >
+                  <Copy className="h-4 w-4 mr-1" />
+                  Copy
+                </Button>
+              </div>
+
+              <div className="rounded-xl bg-slate-900 p-4">
+                <pre className="text-xs font-mono text-slate-300 whitespace-pre-wrap">
+                  {JSON.stringify(log.metadata, null, 2)}
+                </pre>
+              </div>
+            </section>
+
           </div>
         </ScrollArea>
       </SheetContent>
     </Sheet>
+  );
+}
+
+/* ---------------------------------- */
+/* Reusable Info Block                 */
+/* ---------------------------------- */
+
+function InfoBlock({
+  icon,
+  title,
+  value,
+  id,
+  onCopy,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  value?: string | null;
+  id?: string | null;
+  onCopy?: () => void;
+}) {
+  return (
+    <div className="rounded-xl bg-slate-200 p-4 shadow-sm space-y-1 border border-black/10">
+      <div className="flex items-center gap-2 text-xs font-semibold uppercase text-slate-800">
+        {icon}
+        {title}
+      </div>
+      <p className="text-sm font-medium text-black capitalize">
+        {value || "N/A"}
+      </p>
+      {id && (
+        <div className="flex items-center gap-1 text-xs font-mono text-slate-800">
+          {id}
+          <button onClick={onCopy}>
+            <Copy className="h-3 w-3 " />
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

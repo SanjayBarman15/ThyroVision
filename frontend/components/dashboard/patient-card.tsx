@@ -76,7 +76,7 @@ export default function PatientCard({ patient }: { patient: Patient }) {
         <Link href={`/analysis/${patient.id}`}>
           <Button
             size="sm"
-            className="h-9 px-5 cursor-pointer  bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/20 rounded-lg"
+            className="h-7 px-5 cursor-pointer  bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/20 rounded-lg"
           >
             View
           </Button>

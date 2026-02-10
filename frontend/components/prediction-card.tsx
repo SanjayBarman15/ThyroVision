@@ -86,22 +86,37 @@ export default function PredictionCard({ analysis }: PredictionCardProps) {
         </div>
 
         <div className="space-y-1.5">
-          <div className="flex justify-between items-center text-xs mb-1">
-            <span className="text-muted-foreground font-medium">
-              Model Confidence
-            </span>
-          </div>
-          <div className="h-6 w-full bg-secondary/30 rounded-full overflow-hidden relative">
-            <div
-              className="h-full bg-zinc-500 flex items-center justify-end px-2 transition-all duration-500"
-              style={{ width: `${analysis.confidence * 100}%` }}
-            >
-              <span className="text-[10px] font-bold text-white font-mono leading-none">
-                {Math.round(analysis.confidence * 100)}%
-              </span>
-            </div>
-          </div>
-        </div>
+  <span className="text-xs text-muted-foreground font-medium">
+    Model Confidence
+  </span>
+
+  <div className="h-6 w-full bg-secondary/30 rounded-full overflow-hidden relative">
+    <div
+      className={`
+        h-full flex items-center justify-end px-4
+        transition-all duration-500
+        ${
+          analysis.confidence * 100 < 10
+            ? "bg-red-800"
+            : analysis.confidence * 100 <= 25
+            ? "bg-red-700"
+            : analysis.confidence * 100 <= 35
+            ? "bg-red-400"
+            : analysis.confidence * 100 <= 50
+            ? "bg-yellow-400"
+            : analysis.confidence * 100 <= 75
+            ? "bg-green-600"
+            : "bg-green-800"
+        }
+      `}
+      style={{ width: `${analysis.confidence * 100}%` }}
+    >
+      <span className="text-[10px] font-bold text-white font-mono leading-none">
+        {Math.round(analysis.confidence * 100)}%
+      </span>
+    </div>
+  </div>
+</div>
 
         <div className="pt-2">
           <button
@@ -152,3 +167,8 @@ export default function PredictionCard({ analysis }: PredictionCardProps) {
     </Card>
   );
 }
+
+
+
+
+
