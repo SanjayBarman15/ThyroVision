@@ -17,6 +17,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { isWithinInterval } from "date-fns";
+import { statsCardClasses } from "@/lib/colors";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -227,22 +228,22 @@ export default function SystemLogsPage() {
             icon: Activity,
             label: "Total Events",
             value: stats.total,
-            color: "text-blue-500",
-            bg: "bg-blue-500/10",
+            color: statsCardClasses.totalPatients.text,
+            bg: statsCardClasses.totalPatients.bg,
           },
           {
             icon: AlertTriangle,
             label: "System Alerts",
             value: stats.errors,
-            color: "text-destructive",
-            bg: "bg-destructive/10",
+            color: statsCardClasses.systemAlerts.text,
+            bg: statsCardClasses.systemAlerts.bg,
           },
           {
             icon: Database,
             label: "Model Inferences",
             value: stats.inference,
-            color: "text-primary",
-            bg: "bg-primary/10",
+            color: statsCardClasses.modelInferences.text,
+            bg: statsCardClasses.modelInferences.bg,
           },
         ].map(
           (stat, i) =>

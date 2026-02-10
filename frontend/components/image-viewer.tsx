@@ -4,6 +4,7 @@ import type React from "react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import { imageViewerColors } from "@/lib/colors";
 
 interface BoundingBox {
   x: number;
@@ -178,16 +179,7 @@ export default function ImageViewer({
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
       >
-        {/* Background Grid (Medical Style) */}
-        <div
-          className="absolute inset-0 opacity-10 pointer-events-none"
-          style={{
-            backgroundImage: "radial-gradient(#FFF 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-          }}
-        />
-
-        {/* Transform Layer - Applies Zoom & Pan */}
+        {/* Transform Layer - Applies Zoom & Pan (no dot grid - plain black) */}
         <div
           className="absolute inset-0 origin-center will-change-transform"
           style={{
@@ -197,22 +189,10 @@ export default function ImageViewer({
               : "transform 0.15s cubic-bezier(0.2, 0, 0, 1)",
           }}
         >
-          {/* Image Container - Fills Viewport */}
-          <div
-            className={`w-full h-full relative overflow-hidden bg-slate-950`}
-          >
-            {/* Actual Image Simulation */}
+          {/* Image Container - plain black background */}
+          <div className="w-full h-full relative overflow-hidden border-2 border-white">
+            {/* Centered Content Icon or Real Image */}
             <div className="absolute inset-0">
-              {/* This gradient simulates the ultrasound noise texture */}
-              <div
-                className="absolute inset-0 opacity-40"
-                style={{
-                  backgroundImage:
-                    "radial-gradient(circle at center, #1e293b 0%, #020617 100%)",
-                }}
-              />
-
-              {/* Centered Content Icon or Real Image */}
               <div className="absolute inset-0 z-10 text-center flex items-center justify-center">
                 {imageUrl ? (
                   <img
@@ -254,7 +234,7 @@ export default function ImageViewer({
             {imageMode === "processed" && boundingBox && (
               <div className="absolute inset-0 pointer-events-none z-20">
                 <div
-                  className="absolute border-2 border-emerald-500/80 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.3)] backdrop-blur-[0.5px]"
+                  className={`absolute border-2 ${imageViewerColors.boundingBox.border} ${imageViewerColors.boundingBox.bg} ${imageViewerColors.boundingBox.shadow} backdrop-blur-[0.5px]`}
                   style={{
                     left: `${(boundingBox.x / boundingBox.image_width) * 100}%`,
                     top: `${(boundingBox.y / boundingBox.image_height) * 100}%`,
@@ -262,15 +242,13 @@ export default function ImageViewer({
                     height: `${(boundingBox.height / boundingBox.image_height) * 100}%`,
                   }}
                 >
-                  <div className="absolute -top-6 left-0 bg-emerald-900/90 text-emerald-400 text-[10px] font-bold px-2 py-0.5 border border-emerald-500/40 rounded-sm whitespace-nowrap">
+                  <div className={`absolute -top-6 left-0 ${imageViewerColors.boundingBox.labelBg} ${imageViewerColors.boundingBox.labelText} text-[10px] font-bold px-2 py-0.5 border ${imageViewerColors.boundingBox.labelBorder} rounded-sm whitespace-nowrap`}>
                     TI-RADS DETECTED
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Scanlines Effect */}
-            <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-5 bg-size-[100%_4px,6px_100%] opacity-20" />
           </div>
         </div>
 
@@ -291,15 +269,15 @@ export default function ImageViewer({
       {/* Overlays UI - Stays Fixed on Screen (HUD) */}
 
       {/* Top Left - Patient/Scan Tech Data */}
-      <div className="absolute top-4 left-4 pointer-events-none font-mono text-[10px] text-emerald-500/80 flex flex-col gap-1 z-20 mix-blend-screen">
+      {/* <div className="absolute top-4 left-4 pointer-events-none font-mono text-[10px] text-emerald-500/80 flex flex-col gap-1 z-20 mix-blend-screen">
         <span>FR: 42Hz</span>
         <span>DR: 65dB</span>
         <span>GN: 48</span>
         <span>D: 4.0cm</span>
-      </div>
+      </div> */}
 
       {/* Floating Controls - Bottom Center */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-zinc-900/90 backdrop-blur-md border border-white/10 p-1.5 rounded-full shadow-2xl z-30 transition-opacity hover:bg-zinc-900">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black  border border-white/10 p-1.5 rounded-full shadow-2xl z-30 transition-opacity ">
         {/* Mode Switcher */}
         <div className="flex bg-white/5 rounded-full p-0.5 mr-2">
           <button
@@ -316,8 +294,8 @@ export default function ImageViewer({
             onClick={() => onModeChange("processed")}
             className={`px-4 py-1.5 text-xs font-medium rounded-full transition-all duration-300 ${
               imageMode === "processed"
-                ? "bg-emerald-600 text-white shadow-[0_0_15px_rgba(5,150,105,0.4)]"
-                : "text-zinc-500 hover:text-zinc-300"
+                ? imageViewerColors.modeButton.active
+                : imageViewerColors.modeButton.inactive
             }`}
           >
             AI Analysis

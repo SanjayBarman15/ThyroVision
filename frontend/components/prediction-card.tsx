@@ -9,6 +9,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { tiradsColors, getRiskLevelClass } from "@/lib/colors";
 
 interface PredictionCardProps {
   analysis: {
@@ -36,40 +37,27 @@ export default function PredictionCard({ analysis }: PredictionCardProps) {
     },
     tr1: {
       label: "TR1",
-      color: "#5DA686", // Muted Green
+      color: tiradsColors.tr1,
     },
     tr2: {
       label: "TR2",
-      color: "#9CAD60", // Muted Lime
+      color: tiradsColors.tr2,
     },
     tr3: {
       label: "TR3",
-      color: "#DBC059", // Muted Yellow
+      color: tiradsColors.tr3,
     },
     tr4: {
       label: "TR4",
-      color: "#D98A57", // Muted Orange
+      color: tiradsColors.tr4,
     },
     tr5: {
       label: "TR5",
-      color: "#C95D5D", // Muted Red
+      color: tiradsColors.tr5,
     },
   } satisfies ChartConfig;
 
-  const getRiskColor = (level: string) => {
-    switch (level.toLowerCase()) {
-      case "low":
-        return "bg-emerald-500/15 text-emerald-400 border-emerald-500/20";
-      case "moderate":
-        return "bg-amber-500/15 text-amber-400 border-amber-500/20";
-      case "high":
-        return "bg-orange-500/15 text-orange-400 border-orange-500/20";
-      default:
-        return "bg-slate-500/15 text-slate-400 border-slate-500/20";
-    }
-  };
-
-  const riskColorClass = getRiskColor(analysis.riskLevel);
+  const riskColorClass = getRiskLevelClass(analysis.riskLevel);
 
   return (
     <Card className="border-border bg-card overflow-hidden">
@@ -98,22 +86,37 @@ export default function PredictionCard({ analysis }: PredictionCardProps) {
         </div>
 
         <div className="space-y-1.5">
-          <div className="flex justify-between items-center text-xs mb-1">
-            <span className="text-muted-foreground font-medium">
-              Model Confidence
-            </span>
-          </div>
-          <div className="h-6 w-full bg-secondary/30 rounded-full overflow-hidden relative">
-            <div
-              className="h-full bg-zinc-500 flex items-center justify-end px-2 transition-all duration-500"
-              style={{ width: `${analysis.confidence * 100}%` }}
-            >
-              <span className="text-[10px] font-bold text-white font-mono leading-none">
-                {Math.round(analysis.confidence * 100)}%
-              </span>
-            </div>
-          </div>
-        </div>
+  <span className="text-xs text-muted-foreground font-medium">
+    Model Confidence
+  </span>
+
+  <div className="h-6 w-full bg-secondary/30 rounded-full overflow-hidden relative">
+    <div
+      className={`
+        h-full flex items-center justify-end px-4
+        transition-all duration-500
+        ${
+          analysis.confidence * 100 < 10
+            ? "bg-red-800"
+            : analysis.confidence * 100 <= 25
+            ? "bg-red-700"
+            : analysis.confidence * 100 <= 35
+            ? "bg-red-400"
+            : analysis.confidence * 100 <= 50
+            ? "bg-yellow-400"
+            : analysis.confidence * 100 <= 75
+            ? "bg-green-600"
+            : "bg-green-800"
+        }
+      `}
+      style={{ width: `${analysis.confidence * 100}%` }}
+    >
+      <span className="text-[10px] font-bold text-white font-mono leading-none">
+        {Math.round(analysis.confidence * 100)}%
+      </span>
+    </div>
+  </div>
+</div>
 
         <div className="pt-2">
           <button
@@ -164,3 +167,8 @@ export default function PredictionCard({ analysis }: PredictionCardProps) {
     </Card>
   );
 }
+
+
+
+
+
