@@ -20,7 +20,7 @@ from app.api import reports
 # Load environment variables (local dev only)
 # Render env vars will override
 # ---------------------------
-load_dotenv(override=False)
+load_dotenv(override=True)
 
 # ---------------------------
 # Logger (Uvicorn logger)

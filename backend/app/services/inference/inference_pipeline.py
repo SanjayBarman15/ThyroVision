@@ -8,7 +8,7 @@ from typing import Dict
 from PIL import Image
 from io import BytesIO
 
-from app.services.inference.roi_detector import MockROIDetector
+from app.services.inference.roi_detector import FasterRCNNDetector
 from app.services.inference.feature_classifier import FeatureClassifier
 from app.services.rules.tirads import calculate_tirads
 from app.services.inference.box_utils import xyxy_to_xywh
@@ -33,7 +33,7 @@ class InferencePipeline:
     PIPELINE_VERSION = "production-pipeline-v1-xception"
 
     def __init__(self):
-        self.roi_detector = MockROIDetector()
+        self.roi_detector = FasterRCNNDetector()
         self.feature_classifier = FeatureClassifier()
 
     async def run(self, image_bytes: bytes) -> Dict:
@@ -48,14 +48,12 @@ class InferencePipeline:
         except Exception as e:
             raise RuntimeError(f"Failed to load image: {str(e)}")
 
+        # 2️⃣ ROI Detection (Real Faster R-CNN)
         # ─────────────────────────────────────────────
-        # 2️⃣ ROI Detection (Faster R-CNN)
-        # ─────────────────────────────────────────────
-        # The detector gives us the "Source of Truth" for the nodule location
-        roi_result = self.roi_detector.detect(
-            image_width=image_width,
-            image_height=image_height,
-        )
+        # Convert PIL to Numpy for detector (which handles CLAHE internally)
+        image_array = np.array(img)
+        
+        roi_result = self.roi_detector.detect(image_array)
 
         roi_voc = roi_result["bounding_box"]  # xyxy in raw image space
         
@@ -67,11 +65,8 @@ class InferencePipeline:
             "coordinate_space": "raw_image"
         })
 
+        # 3️⃣ Xception Preprocessing
         # ─────────────────────────────────────────────
-        # 3️⃣ Preprocessing (Real Xception Logic)
-        # ─────────────────────────────────────────────
-        # Convert PIL to Numpy (RGB)
-        image_array = np.array(img)
         
         # Extract bbox as list [xmin, ymin, xmax, ymax]
         bbox_list = [
@@ -144,6 +139,7 @@ class InferencePipeline:
 
             "features": pruned_features,
             "bounding_box": final_bounding_box, # BBox from R-CNN
+            "roi_score": roi_result.get("score", 0.0),
             
             "ai_explanation": ai_result["ai_explanation"],
             "explanation_metadata": {

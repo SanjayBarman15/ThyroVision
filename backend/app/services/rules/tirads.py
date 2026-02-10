@@ -13,8 +13,7 @@ def calculate_tirads(feature_results: dict) -> Dict:
     breakdown = {}
     
     # Names in feature_results match FEATURE_DEFINITIONS keys
-    # Note: 'calcifications' in mock is 'echogenic_foci' in real model
-    # Note: 'margins' in mock is 'margin' in real model
+    # ACR features: composition, echogenicity, shape, margin, echogenic_foci
     
     for feature_name in ['composition', 'echogenicity', 'shape', 'margin', 'echogenic_foci']:
         data = feature_results.get(feature_name)

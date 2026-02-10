@@ -175,6 +175,7 @@ async def run_inference(
         metadata={
             "tirads": inference["tirads"],
             "confidence": inference["confidence"],
+            "roi_score": inference.get("roi_score", 0.0),
             "inference_time_ms": inference["inference_time_ms"]
         },
         error_code="INFERENCE_OK"

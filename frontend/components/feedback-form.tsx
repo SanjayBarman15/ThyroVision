@@ -49,7 +49,7 @@ export default function FeedbackForm({
       setComments(existingFeedback.comments || "");
       if (existingFeedback.corrected_features?.incorrect_fields) {
         setIncorrectFeatures(
-          existingFeedback.corrected_features.incorrect_fields
+          existingFeedback.corrected_features.incorrect_fields,
         );
       }
     }
@@ -59,7 +59,7 @@ export default function FeedbackForm({
     setIncorrectFeatures((prev) =>
       prev.includes(feature)
         ? prev.filter((f) => f !== feature)
-        : [...prev, feature]
+        : [...prev, feature],
     );
   };
 
@@ -79,11 +79,10 @@ export default function FeedbackForm({
       } = await supabase.auth.getSession();
       const token = session?.access_token;
 
-      const backendUrl =
-        process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+      const proxyPrefix = "/api/proxy";
 
       const response = await fetch(
-        `${backendUrl}/predictions/${predictionId}/feedback`,
+        `${proxyPrefix}/predictions/${predictionId}/feedback`,
         {
           method: "POST",
           headers: {
@@ -100,7 +99,7 @@ export default function FeedbackForm({
                 },
             comments: comments || null,
           }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -124,13 +123,19 @@ export default function FeedbackForm({
         <div
           className={`h-12 w-12 rounded-xl ${feedbackFormClasses.success.iconBg} flex items-center justify-center shrink-0`}
         >
-          <CheckCircle2 className={`h-6 w-6 ${feedbackFormClasses.success.icon}`} />
+          <CheckCircle2
+            className={`h-6 w-6 ${feedbackFormClasses.success.icon}`}
+          />
         </div>
         <div className="min-w-0">
-          <p className={`text-base font-bold ${feedbackFormClasses.success.title}`}>
+          <p
+            className={`text-base font-bold ${feedbackFormClasses.success.title}`}
+          >
             Feedback recorded
           </p>
-          <p className={`text-sm ${feedbackFormClasses.success.subtitle} mt-0.5`}>
+          <p
+            className={`text-sm ${feedbackFormClasses.success.subtitle} mt-0.5`}
+          >
             Thank you for helping us improve model accuracy.
           </p>
         </div>
