@@ -9,6 +9,7 @@ import {
   X,
   MessageSquare,
   AlertCircle,
+  Sparkles,
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import {
@@ -17,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { feedbackFormClasses } from "@/lib/colors";
 
 interface FeedbackFormProps {
   predictionId: string;
@@ -39,7 +41,6 @@ export default function FeedbackForm({
 
   const supabase = createClient();
 
-  // Initialize from existing feedback if provided
   useEffect(() => {
     if (existingFeedback) {
       setSubmitted(true);
@@ -117,37 +118,52 @@ export default function FeedbackForm({
 
   if (submitted) {
     return (
-      <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 flex items-center gap-3 animate-in fade-in zoom-in duration-300">
-        <div className="h-8 w-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
-          <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+      <div
+        className={`${feedbackFormClasses.success.container} rounded-2xl p-5 flex items-center gap-4 shadow-lg border-2`}
+      >
+        <div
+          className={`h-12 w-12 rounded-xl ${feedbackFormClasses.success.iconBg} flex items-center justify-center shrink-0`}
+        >
+          <CheckCircle2 className={`h-6 w-6 ${feedbackFormClasses.success.icon}`} />
         </div>
-        <div>
-          <p className="text-sm font-semibold text-emerald-400">
-            Feedback Recorded
+        <div className="min-w-0">
+          <p className={`text-base font-bold ${feedbackFormClasses.success.title}`}>
+            Feedback recorded
           </p>
-          <p className="text-xs text-emerald-500/60">
-            Thank you for helping us improve.
+          <p className={`text-sm ${feedbackFormClasses.success.subtitle} mt-0.5`}>
+            Thank you for helping us improve model accuracy.
           </p>
         </div>
       </div>
     );
   }
 
+  const features = [
+    "Composition",
+    "Echogenicity",
+    "Margins",
+    "Calcifications",
+    "Shape",
+  ];
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-          <MessageSquare className="h-4 w-4 text-indigo-500" />
-          Clinical Feedback
+    <div className="rounded-2xl border border-border/60 bg-card/50 shadow-xl overflow-hidden">
+      {/* Header strip */}
+      <div className="bg-primary/5 border-b border-border/50 px-5 py-4 flex items-center justify-between">
+        <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 text-primary">
+            <MessageSquare className="h-4 w-4" />
+          </span>
+          Clinical feedback
         </h3>
-        <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-medium px-2 py-0.5 bg-secondary/30 rounded-full border border-border/50">
-          Improve Accuracy
+        <span className="text-[10px] uppercase tracking-widest font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+          Improves accuracy
         </span>
       </div>
 
-      <div className="bg-secondary/10 rounded-xl p-4 border border-border/40 space-y-4 transition-all duration-300">
-        <div className="space-y-3">
-          <p className="text-xs text-muted-foreground font-medium">
+      <div className="p-5 space-y-5">
+        <div>
+          <p className="text-xs font-semibold text-foreground mb-3">
             Was the AI prediction correct for this scan?
           </p>
           <div className="grid grid-cols-2 gap-3">
@@ -158,14 +174,14 @@ export default function FeedbackForm({
                 setIsCorrect(true);
                 setError(null);
               }}
-              className={`h-10 rounded-lg border-2 transition-all ${
+              className={`cursor-pointer h-11 rounded-xl border-2 transition-all font-medium ${
                 isCorrect === true
-                  ? "bg-emerald-500/10 border-emerald-500 text-emerald-500 hover:bg-emerald-500/20"
-                  : "border-border hover:bg-secondary/30"
+                  ? `${feedbackFormClasses.correct.bg} ${feedbackFormClasses.correct.border} ${feedbackFormClasses.correct.text} ${feedbackFormClasses.correct.hover}`
+                  : "border-border hover:bg-muted/50"
               }`}
             >
               <Check className="h-4 w-4 mr-2" />
-              Yes, Correct
+              Yes, correct
             </Button>
             <Button
               variant="outline"
@@ -174,41 +190,44 @@ export default function FeedbackForm({
                 setIsCorrect(false);
                 setError(null);
               }}
-              className={`h-10 rounded-lg border-2 transition-all ${
+              className={`cursor-pointer h-11 rounded-xl border-2 transition-all font-medium ${
                 isCorrect === false
-                  ? "bg-rose-500/10 border-rose-500 text-rose-500 hover:bg-rose-500/20"
-                  : "border-border hover:bg-secondary/30"
+                  ? `${feedbackFormClasses.incorrect.bg} ${feedbackFormClasses.incorrect.border} ${feedbackFormClasses.incorrect.text} ${feedbackFormClasses.incorrect.hover}`
+                  : "border-border hover:bg-muted/50"
               }`}
             >
               <X className="h-4 w-4 mr-2" />
-              No, Incorrect
+              No, incorrect
             </Button>
           </div>
         </div>
 
-        {/* Conditional Fields */}
         {isCorrect === false && (
-          <div className="space-y-4 pt-4 border-t border-dashed border-border/60 animate-in slide-in-from-top-2 duration-300">
+          <div className="space-y-4 pt-4 border-t border-dashed border-border/60">
             <div className="space-y-2">
-              <label className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">
-                Correct TI-RADS Level
+              <label className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider flex items-center gap-1.5">
+                <Sparkles className="h-3 w-3" />
+                Correct TI-RADS level
               </label>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
-                    className="w-full justify-between h-10 border-border bg-background/50"
+                    className="w-full justify-between h-11 rounded-xl border-border bg-background/50 font-medium"
                   >
-                    {correctedTirads ? `TR${correctedTirads}` : "Select Level"}
+                    {correctedTirads ? `TR${correctedTirads}` : "Select level"}
                     <ChevronDown className="h-4 w-4 opacity-50" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-[calc(100vw-3rem)] max-w-[300px] bg-popover/95 backdrop-blur-sm border-border">
+                <DropdownMenuContent
+                  className="w-(--radix-dropdown-menu-trigger-width) max-w-[300px] rounded-xl border-border bg-popover"
+                  align="start"
+                >
                   {[1, 2, 3, 4, 5].map((val) => (
                     <DropdownMenuItem
                       key={val}
                       onClick={() => setCorrectedTirads(val)}
-                      className="cursor-pointer hover:bg-primary/10"
+                      className="cursor-pointer rounded-lg font-medium"
                     >
                       TI-RADS {val}
                     </DropdownMenuItem>
@@ -219,23 +238,18 @@ export default function FeedbackForm({
 
             <div className="space-y-2">
               <label className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">
-                Incorrect Features (Optional)
+                Incorrect features (optional)
               </label>
-              <div className="flex flex-wrap gap-1.5">
-                {[
-                  "Composition",
-                  "Echogenicity",
-                  "Margins",
-                  "Calcifications",
-                  "Shape",
-                ].map((feature) => (
+              <div className="flex flex-wrap gap-2">
+                {features.map((feature) => (
                   <button
                     key={feature}
+                    type="button"
                     onClick={() => toggleFeature(feature)}
-                    className={`px-3 py-1.5 rounded-full text-[10px] border transition-all ${
+                    className={`px-3 py-2 rounded-xl text-xs font-medium border transition-all ${
                       incorrectFeatures.includes(feature)
-                        ? "bg-rose-500/20 border-rose-500/50 text-rose-500"
-                        : "bg-background/50 border-border text-muted-foreground hover:border-muted-foreground/50"
+                        ? feedbackFormClasses.incorrectFeature.active
+                        : "bg-muted/30 border-border text-muted-foreground hover:border-muted-foreground/40"
                     }`}
                   >
                     {feature}
@@ -246,36 +260,45 @@ export default function FeedbackForm({
 
             <div className="space-y-2">
               <label className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">
-                Clinical Notes (Optional)
+                Clinical notes (optional)
               </label>
               <textarea
                 value={comments}
                 onChange={(e) => setComments(e.target.value)}
-                placeholder="What did the AI miss?"
+                placeholder="What did the AI miss? Any additional context..."
                 rows={3}
-                className="w-full px-3 py-2 rounded-lg border border-border bg-background/50 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none transition-all"
+                className="w-full px-4 py-3 rounded-xl border border-border bg-background/50 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 resize-none transition-all"
               />
             </div>
           </div>
         )}
 
         {error && (
-          <div className="flex items-center gap-2 text-rose-500 bg-rose-500/10 p-2 rounded-lg border border-rose-500/20 animate-in fade-in duration-200">
+          <div
+            className={`flex items-center gap-2 ${feedbackFormClasses.error.container} ${feedbackFormClasses.error.text} p-3 rounded-xl border`}
+          >
             <AlertCircle className="h-4 w-4 shrink-0" />
-            <p className="text-[10px] font-medium leading-tight">{error}</p>
+            <p className="text-xs font-medium">{error}</p>
           </div>
         )}
 
         <Button
           onClick={handleSubmit}
           disabled={isSubmitting || isCorrect === null}
-          className={`w-full h-10 rounded-lg font-bold text-xs shadow-lg transition-all active:scale-[0.98] ${
+          className={`w-full h-11 rounded-xl font-bold text-sm transition-all ${
             isCorrect === null
-              ? "bg-secondary text-muted-foreground opacity-50"
-              : "bg-primary text-primary-foreground shadow-primary/20 hover:shadow-primary/30"
+              ? "bg-muted text-muted-foreground opacity-60 cursor-not-allowed"
+              : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20"
           }`}
         >
-          {isSubmitting ? "Saving..." : "Submit Review"}
+          {isSubmitting ? (
+            <span className="inline-flex items-center gap-2">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" />
+              Saving…
+            </span>
+          ) : (
+            "Submit review"
+          )}
         </Button>
       </div>
     </div>

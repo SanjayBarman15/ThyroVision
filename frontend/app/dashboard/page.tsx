@@ -164,42 +164,43 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+
       {/* Header */}
-      <header className="border-b border-border bg-card sticky top-0 z-30">
+      <header className="sticky top-0 z-30 border-b border-border/50 bg-card/80 backdrop-blur-md shadow-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-primary/20 flex items-center justify-center">
-              <span className="text-primary font-bold">TS</span>
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-card flex items-center justify-center shadow-lg shadow-primary/10 border border-primary/20">
+              <span className="text-primary font-bold text-lg">TS</span>
             </div>
             <div>
-              <h1 className="text-lg font-bold text-foreground leading-none">
+              <h1 className="text-xl font-bold text-foreground leading-none tracking-tight">
                 ThyroSight
               </h1>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
-                Radiology Wigman
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mt-0.5">
+                Radiology Platform
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
             <div className="hidden sm:flex flex-col items-end">
-              <p className="text-sm font-medium text-foreground">
+              <p className="text-sm font-semibold text-foreground">
                 {doctorName || "Doctor"}
               </p>
               <p className="text-xs text-muted-foreground">
                 Senior Radiologist
               </p>
             </div>
-            <div className="h-8 w-px bg-border hidden sm:block" />
+            <div className="h-8 w-px bg-border/50 hidden sm:block" />
             <form action={signout}>
               <Button
-                variant="ghost"
+                
                 size="sm"
-                className="text-muted-foreground hover:text-foreground"
+                className="rounded-lg  bg-red-500 hover:bg-red-600 text-white"
                 type="submit"
               >
                 <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
+                <span className="hidden sm:inline">Sign out</span>
               </Button>
             </form>
           </div>
@@ -207,24 +208,28 @@ export default function DashboardPage() {
       </header>
 
       {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="relative z-10 mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Top Actions Row */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
-          <div>
-            <h2 className="text-2xl font-semibold text-foreground tracking-tight">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-6">
+          <div className="space-y-1">
+            <h2 className="text-3xl font-bold text-foreground tracking-tight">
               Dashboard Overview
             </h2>
-            <p className="text-sm text-muted-foreground">
-              Welcome back, {doctorName || "Doctor"}. You have{" "}
-              <span className="text-primary font-medium">
-                {stats.newScansCount} new analyses
-              </span>{" "}
-              today.
+            <p className="text-muted-foreground">
+              Welcome back, <span className="font-semibold text-foreground">{doctorName || "Doctor"}</span>. 
+              {stats.newScansCount > 0 && (
+                <> You have{" "}
+                  <span className="text-primary font-semibold">
+                    {stats.newScansCount} new {stats.newScansCount === 1 ? "analysis" : "analyses"}
+                  </span>{" "}
+                  today.</>
+              )}
+              {stats.newScansCount === 0 && " No new analyses today."}
             </p>
           </div>
           <Button
             onClick={() => setIsNewScanOpen(true)}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 px-6"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground   transition-all hover:scale-105 active:scale-95 px-6 h-11 rounded-xl font-semibold"
           >
             <Plus className="h-5 w-5 mr-2" />
             Start New Scan
@@ -232,77 +237,101 @@ export default function DashboardPage() {
         </div>
 
         {/* Stats Strip */}
-        <StatsStrip
-          totalPatients={stats.totalPatients}
-          newScansCount={stats.newScansCount}
-        />
-
-        {/* Patient List Section */}
-        <div className="space-y-4 max-h-[calc(100vh-300px)] overflow-y-auto custom-scrollbar pr-2">
-          {/* List Controls / Smart Sorting */}
-          <div className="flex items-center justify-between border-b border-border pb-4">
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-foreground">Recent Scans</h3>
-              <span className="text-xs bg-secondary/50 text-secondary-foreground px-2 py-0.5 rounded-full">
-                {patients.length}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 text-xs text-muted-foreground hover:text-foreground"
-              >
-                <Filter className="h-3 w-3 mr-1.5" /> Filter
-              </Button>
-              <div className="h-4 w-px bg-border" />
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    <ArrowUpDown className="h-3 w-3 mr-1.5" /> Sort:{" "}
-                    <span className="text-foreground ml-1 font-medium capitalize">
-                      {sortBy}
-                    </span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setSortBy("urgency")}>
-                    Urgency (High Risk first)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortBy("recent")}>
-                    Most Recent
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortBy("name")}>
-                    Patient Name
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-
-          {/* List Content */}
-          {loading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-24 w-full rounded-lg" />
-              ))}
-            </div>
-          ) : sortedPatients.length > 0 ? (
-            <div className="space-y-3">
-              {sortedPatients.map((patient) => (
-                <PatientCard key={patient.id} patient={patient} />
-              ))}
-            </div>
-          ) : (
-            <EmptyState onAction={() => setIsNewScanOpen(true)} />
-          )}
+        <div className="mb-8">
+          <StatsStrip
+            totalPatients={stats.totalPatients}
+            newScansCount={stats.newScansCount}
+          />
         </div>
+
+       {/* ===================== Recent Scans – Redesigned ===================== */}
+<section className="relative mt-2 ">
+
+{/* Glow background */}
+{/* <div className="absolute inset-0 -z-10 rounded-3xl bg-black" /> */}
+
+<div className="rounded-3xl border border-border/50 bg-card/70  p-6">
+
+  {/* Header */}
+  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-6">
+    <div>
+      <h3 className="text-2xl font-extrabold tracking-tight">
+        Recent Scans
+      </h3>
+      <p className="text-sm text-muted-foreground mt-1">
+        AI-sorted by clinical priority
+      </p>
+    </div>
+
+    {/* Smart Sort Tabs */}
+    <div className="flex items-center bg-secondary p-1 rounded-xl">
+      {(["urgency", "recent", "name"] as const).map((key) => (
+        <button
+          key={key}
+          onClick={() => setSortBy(key)}
+          className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all
+            ${
+              sortBy === key
+                ? "bg-primary text-white "
+                : "text-muted-foreground hover:text-foreground"
+            }
+          `}
+        >
+          {key === "urgency" && "Urgency"}
+          {key === "recent" && "Recent"}
+          {key === "name" && "Name"}
+        </button>
+      ))}
+    </div>
+  </div>
+
+  {/* Divider */}
+  <div className="h-px w-full bg-border/50 mb-4" />
+
+  {/* List */}
+  <div className="max-h-[calc(100vh-420px)] overflow-y-auto pr-2 custom-scrollbar">
+    {loading ? (
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <Skeleton
+            key={i}
+            className="h-28 w-full rounded-2xl bg-muted/40"
+          />
+        ))}
+      </div>
+    ) : sortedPatients.length > 0 ? (
+      <div className="space-y-4">
+        {sortedPatients.map((patient) => (
+          <div
+            key={patient.id}
+            className={`
+              group relative rounded-2xl transition-all
+              ${
+                patient.status === "high-risk"
+                  ? "border border-red-500/40 bg-red-500/5 shadow-red-500/10"
+                  : patient.status === "new"
+                  ? "border border-primary/40 bg-primary/5 shadow-primary/10"
+                  : "border border-border/40 bg-card"
+              }
+              hover:shadow-xl
+            `}
+          >
+            {/* High risk glow */}
+            {patient.status === "high-risk" && (
+              <div className="absolute inset-0 -z-10 rounded-2xl bg-red-500/20 blur-xl animate-pulse" />
+            )}
+
+            <PatientCard patient={patient} />
+          </div>
+        ))}
+      </div>
+    ) : (
+      <EmptyState onAction={() => setIsNewScanOpen(true)} />
+    )}
+  </div>
+</div>
+</section>
+
       </main>
 
       {/* New Scan Panel */}

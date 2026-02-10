@@ -224,46 +224,50 @@ export default function AnalysisPage({
         predictionId={analysis?.predictionId}
       />
 
-      <main className="flex-1 overflow-hidden relative">
-        <SplitPane>
-          {/* LEFT PANEL - Scrollable Info */}
-          <div className="h-full overflow-y-auto p-4 space-y-4 pb-20 custom-scrollbar">
-            <PatientInfoCard patient={patient} />
-            {analysis ? (
-              <>
-                <PredictionCard analysis={analysis} />
-                <ExplanationAccordion analysis={analysis} />
-              </>
-            ) : (
-              <div className="p-4 border border-dashed rounded-lg text-center text-muted-foreground">
-                No AI analysis results found for this scan.
+      <main className="flex-1 overflow-hidden relative px-4 pb-4 sm:px-6 lg:px-8">
+        <div className="h-full rounded-2xl border border-border/60 bg-card/60 shadow-lg overflow-hidden">
+          <SplitPane>
+            {/* LEFT PANEL - Scrollable Info */}
+            <div className="h-full overflow-y-auto p-4 lg:p-6 space-y-4 pb-20 custom-scrollbar">
+              <PatientInfoCard patient={patient} />
+              {analysis ? (
+                <>
+                  <PredictionCard analysis={analysis} />
+                  <ExplanationAccordion analysis={analysis} />
+                </>
+              ) : (
+                <div className="p-4 border border-dashed rounded-lg text-center text-muted-foreground text-sm">
+                  No AI analysis results found for this scan.
+                </div>
+              )}
+              <div className="pt-4 border-t border-border mt-6">
+                <FeedbackForm
+                  predictionId={analysis?.predictionId}
+                  existingFeedback={analysis?.existingFeedback}
+                  onSuccess={() =>
+                    console.log("Feedback submitted successfully")
+                  }
+                />
               </div>
-            )}
-            <div className="pt-4 border-t border-border mt-6">
-              <FeedbackForm
-                predictionId={analysis?.predictionId}
-                existingFeedback={analysis?.existingFeedback}
-                onSuccess={() => console.log("Feedback submitted successfully")}
+            </div>
+
+            {/* RIGHT PANEL - Image Workspace */}
+            <div className="h-full bg-black relative flex flex-col">
+              <ImageViewer
+                zoomLevel={zoomLevel}
+                imageMode={imageMode}
+                onZoomIn={handleZoomIn}
+                onZoomOut={handleZoomOut}
+                onReset={handleReset}
+                onModeChange={setImageMode}
+                onZoomScale={handleZoomScale}
+                // Pass real image URLs
+                imageUrl={currentImageUrl}
+                boundingBox={analysis?.boundingBox}
               />
             </div>
-          </div>
-
-          {/* RIGHT PANEL - Image Workspace */}
-          <div className="h-full bg-black/90 relative flex flex-col">
-            <ImageViewer
-              zoomLevel={zoomLevel}
-              imageMode={imageMode}
-              onZoomIn={handleZoomIn}
-              onZoomOut={handleZoomOut}
-              onReset={handleReset}
-              onModeChange={setImageMode}
-              onZoomScale={handleZoomScale}
-              // Pass real image URLs
-              imageUrl={currentImageUrl}
-              boundingBox={analysis?.boundingBox}
-            />
-          </div>
-        </SplitPane>
+          </SplitPane>
+        </div>
       </main>
     </div>
   );
