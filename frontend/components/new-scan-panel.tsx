@@ -167,13 +167,12 @@ export default function NewScanPanel({
         throw new Error("Authentication failed. Please log in again.");
 
       const token = session.access_token;
-      const backendUrl =
-        process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+      const proxyPrefix = "/api/proxy";
 
       // 1. Create Patient (skip if already created during retry)
       let patientId = createdPatientId;
       if (!patientId) {
-        const patientResponse = await fetch(`${backendUrl}/patients/`, {
+        const patientResponse = await fetch(`${proxyPrefix}/patients/`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -201,7 +200,7 @@ export default function NewScanPanel({
       imageFormData.append("patient_id", patientId as string);
       imageFormData.append("file", imageFile!);
 
-      const imageResponse = await fetch(`${backendUrl}/images/upload-raw`, {
+      const imageResponse = await fetch(`${proxyPrefix}/images/upload-raw`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: imageFormData,
@@ -227,7 +226,7 @@ export default function NewScanPanel({
       toast.info("Starting AI Analysis...", {
         icon: <Loader2 className="h-4 w-4 animate-spin" />,
       });
-      const inferenceResponse = await fetch(`${backendUrl}/inference/run`, {
+      const inferenceResponse = await fetch(`${proxyPrefix}/inference/run`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -259,7 +258,7 @@ export default function NewScanPanel({
       );
 
       const explainResponse = await fetch(
-        `${backendUrl}/inference/${predictionId}/explain`,
+        `${proxyPrefix}/inference/${predictionId}/explain`,
         {
           method: "POST",
           headers: {
