@@ -28,6 +28,7 @@ env/
 # models/*.h5         # trained models (optional: can ignore or include based on choice)
 # *.h5
 # *.hdf5
+*.pth
 
 # =====================
 # Frontend (Next.js / Node)
