@@ -243,9 +243,16 @@ async def generate_prediction_explanation(
         )
 
     # 4️⃣ Store explanation in DB
+    # ⚠️ FIX: Merge with existing explanation_metadata to preserve Grad-CAM
+    existing_metadata = prediction.get("explanation_metadata") or {}
+    updated_metadata = {
+        **existing_metadata,
+        **result["explanation_metadata"]
+    }
+
     supabase_admin.table("predictions").update({
         "ai_explanation": result["ai_explanation"],
-        "explanation_metadata": result["explanation_metadata"]
+        "explanation_metadata": updated_metadata
     }).eq("id", str(prediction_id)).execute()
 
     # 5️⃣ Log explanation event
