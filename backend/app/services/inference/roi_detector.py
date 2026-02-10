@@ -96,19 +96,25 @@ class FasterRCNNDetector:
         if len(scores) == 0:
             print("⚠️ Detection failed: No boxes found by model.")
             # Fallback to full image if nothing detected (safe default)
-            return self._format_fallback(w_orig, h_orig)
+            return self._format_fallback(w_orig, h_orig, 0.0)
 
         # 3. Pick highest confidence box
         max_idx = scores.argmax()
         max_score = scores[max_idx].item()
         
-        print(f"🎯 Detection successful. Max score: {max_score:.4f}")
+        print(f"\n📊 --- RCNN DETECTIONS (Top 5) ---")
+        for i in range(min(5, len(scores))):
+            s = scores[i].item()
+            b = boxes[i].cpu().numpy()
+            print(f"  [{i+1}] Score: {s:.4f} | Box: {b.tolist()}")
+        print(f"🎯 Selected Max Score: {max_score:.4f}")
 
         # Threshold check
-        CONF_THRESHOLD = 0.5
+        # ⚠️ DIAGNOSTIC: Lowered threshold from 0.5 to 0.1 to see if model is detecting anything at all
+        CONF_THRESHOLD = 0.1 
         if max_score < CONF_THRESHOLD:
             print(f"⚠️ Confidence too low ({max_score:.4f} < {CONF_THRESHOLD}). Using fallback.")
-            return self._format_fallback(w_orig, h_orig)
+            return self._format_fallback(w_orig, h_orig, max_score)
 
         bbox = boxes[max_idx].cpu().numpy()
         xmin, ymin, xmax, ymax = bbox
@@ -131,26 +137,14 @@ class FasterRCNNDetector:
             },
         }
 
-    def _format_fallback(self, w, h):
+    def _format_fallback(self, w, h, score=0.0):
         """Returns a whole-image crop if detection fails."""
         return {
             "bounding_box": {"xmin": 0, "ymin": 0, "xmax": w, "ymax": h},
-            "score": 0.0,
+            "score": float(score),
             "image_width": w,
             "image_height": h,
             "format": "pascal_voc",
             "coordinate_space": "raw_image",
-            "detector": {"name": self.MODEL_NAME, "version": "fallback"}
-        }
-
-    def _format_fallback(self, w, h):
-        """Returns a whole-image crop if detection fails."""
-        return {
-            "bounding_box": {"xmin": 0, "ymin": 0, "xmax": w, "ymax": h},
-            "score": 0.0,
-            "image_width": w,
-            "image_height": h,
-            "format": "pascal_voc",
-            "coordinate_space": "raw_image",
-            "detector": {"name": self.MODEL_NAME, "version": "fallback"}
+            "detector": {"name": self.MODEL_NAME, "version": f"fallback-score-{score:.4f}"}
         }

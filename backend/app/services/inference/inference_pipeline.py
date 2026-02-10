@@ -139,6 +139,7 @@ class InferencePipeline:
 
             "features": pruned_features,
             "bounding_box": final_bounding_box, # BBox from R-CNN
+            "roi_score": roi_result.get("score", 0.0),
             
             "ai_explanation": ai_result["ai_explanation"],
             "explanation_metadata": {
