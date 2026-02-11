@@ -1,7 +1,7 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
-import { Users, AlertTriangle, FileInput, MessageSquare } from "lucide-react";
+import { Users, FileInput } from "lucide-react";
 import { statsCardClasses } from "@/lib/colors";
 
 interface StatsStripProps {
@@ -18,33 +18,17 @@ export default function StatsStrip({
       label: "Total Patients",
       value: totalPatients.toLocaleString(),
       icon: Users,
-      trend: "+12%", // Mock trend for now
       color: statsCardClasses.totalPatients.text,
       bg: statsCardClasses.totalPatients.bg,
+      badge: "All time",
     },
     {
-      label: "High Risk (TR4-5)",
-      value: "14",
-      icon: AlertTriangle,
-      trend: "+2",
-      color: statsCardClasses.highRisk.text,
-      bg: statsCardClasses.highRisk.bg,
-    },
-    {
-      label: "New Scans (24h)",
+      label: "New Scans",
       value: newScansCount.toString(),
       icon: FileInput,
-      trend: "New",
       color: statsCardClasses.newScans.text,
       bg: statsCardClasses.newScans.bg,
-    },
-    {
-      label: "Pending Feedback",
-      value: "5",
-      icon: MessageSquare,
-      trend: "-2",
-      color: statsCardClasses.pendingFeedback.text,
-      bg: statsCardClasses.pendingFeedback.bg,
+      badge: "Last 24h",
     },
   ];
 
@@ -53,30 +37,55 @@ export default function StatsStrip({
       {stats.map((stat, i) => (
         <Card
           key={i}
-          className="p-4 border-border bg-card/40 hover:bg-card/60 transition-colors flex flex-col justify-between h-28 relative overflow-hidden group"
+          className="
+            relative h-32 p-4 overflow-hidden
+            bg-card/40 backdrop-blur
+            border border-border/60
+            transition-all duration-300
+            hover:-translate-y-1 hover:shadow-lg hover:bg-card/70
+            group
+          "
         >
-          <div className="flex items-start justify-between relative z-10">
-            <div
-              className={`p-2 rounded-lg ${stat.bg} group-hover:scale-110 transition-transform`}
-            >
-              <stat.icon className={`h-4 w-4 ${stat.color}`} />
-            </div>
-            <span className="text-[10px] font-medium text-muted-foreground/70 bg-secondary/10 px-1.5 py-0.5 rounded-full">
-              {stat.trend}
-            </span>
-          </div>
-          <div className="relative z-10">
-            <span className="text-2xl font-bold text-foreground block tracking-tight">
-              {stat.value}
-            </span>
-            <p className="text-xs text-muted-foreground font-medium mt-1">
-              {stat.label}
-            </p>
-          </div>
-          {/* Subtle background decoration */}
-          <stat.icon
-            className={`absolute -right-4 -bottom-4 h-24 w-24 ${stat.color} opacity-5 rotate-12 group-hover:rotate-0 transition-transform duration-500`}
+          {/* Glow background */}
+          <div
+            className={`
+              absolute inset-0 opacity-0 group-hover:opacity-100
+              transition-opacity duration-300
+              ${stat.bg}
+              blur-2xl
+            `}
           />
+
+          <div className="relative z-10 flex flex-col h-full justify-between">
+            {/* Top row */}
+            <div className="flex items-center justify-between">
+              <div
+                className={`
+                  p-2 rounded-xl
+                  ${stat.bg}
+                  shadow-sm
+                  transition-transform duration-300
+                  group-hover:scale-110
+                `}
+              >
+                <stat.icon className={`h-4 w-4 ${stat.color}`} />
+              </div>
+
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted/60 text-muted-foreground font-medium">
+                {stat.badge}
+              </span>
+            </div>
+
+            {/* Value */}
+            <div>
+              <span className="text-3xl font-extrabold tracking-tight text-foreground leading-none">
+                {stat.value}
+              </span>
+              <p className="mt-1 text-xs text-muted-foreground font-medium">
+                {stat.label}
+              </p>
+            </div>
+          </div>
         </Card>
       ))}
     </div>

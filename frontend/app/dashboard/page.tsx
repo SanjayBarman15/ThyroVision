@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, LogOut, ArrowUpDown, Filter } from "lucide-react";
+import { Plus, LogOut, Clock3, ArrowDownAZ } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,8 +15,8 @@ import PatientCard from "@/components/dashboard/patient-card";
 import EmptyState from "@/components/dashboard/empty-state";
 import { signout } from "@/app/login/actions";
 import { createClient } from "@/utils/supabase/client";
-import { useEffect, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 
 type PatientStatus = "new" | "reviewed" | "high-risk" | "feedback-pending";
 
@@ -31,16 +31,26 @@ interface Patient {
 }
 
 export default function DashboardPage() {
-  const [isNewScanOpen, setIsNewScanOpen] = useState(false);
+  const supabase = createClient();
+
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const [doctorName, setDoctorName] = useState("");
+  const [isNewScanOpen, setIsNewScanOpen] = useState(false);
+
+  // Profile modal state
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [age, setAge] = useState("");
+  const [department, setDepartment] = useState("");
+  const [hospital, setHospital] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
+
   const [stats, setStats] = useState({
     totalPatients: 0,
     newScansCount: 0,
   });
 
-  const supabase = createClient();
+  const [sortBy, setSortBy] = useState<"recent" | "name">("recent");
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -51,84 +61,87 @@ export default function DashboardPage() {
 
       if (!user) return;
 
-      // Fetch doctor details
+      // Fetch doctor info
       const { data: doctorData } = await supabase
         .from("doctors")
         .select("name")
         .eq("id", user.id)
         .single();
 
-      if (doctorData) {
-        setDoctorName(doctorData.name);
-      }
+      if (doctorData) setDoctorName(doctorData.name);
 
-      // Fetch patients for this doctor
-      // 1. Get Doctor ID (which is user.id)
-      // 2. Query patients with latest predictions
-      const { data: patientsData, error } = await supabase
+      const { data: patientsData, error: patientsError } = await supabase
         .from("patients")
-        .select(
-          `
+        .select(`
           *,
           raw_images (
             id,
             uploaded_at,
             predictions (
-              tirads
+              tirads,
+              id
             )
           )
-        `,
-        )
+        `)
         .eq("doctor_id", user.id)
         .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching patients:", error);
-        return;
+      if (patientsError) {
+        console.error("Error fetching patients:", patientsError);
       }
 
       if (patientsData) {
-        // Map DB data to UI format
-        const formattedPatients: Patient[] = patientsData.map((p: any) => {
-          // Find the latest raw image that has a prediction
-          const latestRawImage = p.raw_images
-            ?.sort(
+        const formatted: Patient[] = patientsData.map((p: any) => {
+          // Ensure raw_images is an array
+          const rawImages = Array.isArray(p.raw_images) ? p.raw_images : [];
+          
+          // Get all raw images with predictions, sorted by upload date (newest first)
+          const rawImagesWithPredictions = rawImages
+            .filter((img: any) => {
+              // Check if predictions exist and is an array with at least one item
+              return Array.isArray(img.predictions) && 
+                     img.predictions.length > 0 && 
+                     img.predictions[0]?.tirads !== undefined &&
+                     img.predictions[0]?.tirads !== null;
+            })
+            .sort(
               (a: any, b: any) =>
-                new Date(b.uploaded_at).getTime() -
-                new Date(a.uploaded_at).getTime(),
-            )
-            .find((img: any) => img.predictions && img.predictions.length > 0);
+                new Date(b.uploaded_at || 0).getTime() -
+                new Date(a.uploaded_at || 0).getTime(),
+            );
 
+          // Get the latest raw image with a prediction
+          const latestRawImage = rawImagesWithPredictions[0];
           const tiradsScore = latestRawImage?.predictions?.[0]?.tirads;
+
+          // Use the latest scan date from raw_images, or fallback to patient creation date
+          const latestScanDate = latestRawImage?.uploaded_at 
+            ? new Date(latestRawImage.uploaded_at).toISOString().split("T")[0]
+            : new Date(p.created_at).toISOString().split("T")[0];
 
           return {
             id: p.id,
             name: `${p.first_name} ${p.last_name}`,
-            age: p.age || 0, // Fallback if age not calculated
+            age: p.age || 0,
             gender: p.gender,
-            lastScan: new Date(p.created_at).toISOString().split("T")[0],
-            tirads: tiradsScore ? `TR${tiradsScore}` : "N/A",
-            status: tiradsScore ? "reviewed" : "new",
+            lastScan: latestScanDate,
+            tirads: tiradsScore !== undefined && tiradsScore !== null ? `TR${tiradsScore}` : "N/A",
+            status: (tiradsScore !== undefined && tiradsScore !== null ? "reviewed" : "new") as PatientStatus,
           };
         });
 
-        setPatients(formattedPatients);
+        setPatients(formatted);
 
-        // Calculate Stats
         const oneDayAgo = new Date();
         oneDayAgo.setDate(oneDayAgo.getDate() - 1);
 
-        const newScans = patientsData.filter(
-          (p) => new Date(p.created_at) > oneDayAgo,
-        ).length;
-
         setStats({
           totalPatients: patientsData.length,
-          newScansCount: newScans,
+          newScansCount: patientsData.filter(
+            (p) => new Date(p.created_at) > oneDayAgo,
+          ).length,
         });
       }
-    } catch (error) {
-      console.error("Dashboard data fetch error:", error);
     } finally {
       setLoading(false);
     }
@@ -138,203 +151,199 @@ export default function DashboardPage() {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
-  const [sortBy, setSortBy] = useState<"urgency" | "recent" | "name">(
-    "urgency",
-  );
+  // Fetch profile when modal opens
+  useEffect(() => {
+    if (!isProfileOpen) return;
 
-  // Sorting Logic
-  const sortedPatients = [...patients].sort((a, b) => {
-    if (sortBy === "urgency") {
-      // Priority: High Risk -> New -> Feedback Pending -> Reviewed
-      const priority = {
-        "high-risk": 0,
-        new: 1,
-        "feedback-pending": 2,
-        reviewed: 3,
-      };
-      return priority[a.status] - priority[b.status];
-    }
-    if (sortBy === "recent") {
-      return new Date(b.lastScan).getTime() - new Date(a.lastScan).getTime();
-    }
-    if (sortBy === "name") {
-      return a.name.localeCompare(b.name);
-    }
-    return 0;
-  });
+    const fetchProfile = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("doctors")
+        .select("age, department, hospital")
+        .eq("id", user.id)
+        .single();
+
+      if (data) {
+        setAge(data.age?.toString() || "");
+        setDepartment(data.department || "");
+        setHospital(data.hospital || "");
+      }
+    };
+
+    fetchProfile();
+  }, [isProfileOpen, supabase]);
+
+  const saveProfile = async () => {
+    setSavingProfile(true);
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    await supabase
+      .from("doctors")
+      .update({
+        age: age ? Number(age) : null,
+        department,
+        hospital,
+      })
+      .eq("id", user.id);
+
+    setSavingProfile(false);
+    setIsProfileOpen(false);
+  };
 
   return (
     <div className="min-h-screen bg-background relative">
-
       {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-border/50 bg-card/80 backdrop-blur-md shadow-sm">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-card flex items-center justify-center shadow-lg shadow-primary/10 border border-primary/20">
-              <span className="text-primary font-bold text-lg">TS</span>
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-foreground leading-none tracking-tight">
-                ThyroSight
-              </h1>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mt-0.5">
-                Radiology Platform
-              </p>
-            </div>
-          </div>
+      <header className="sticky top-0 z-30 border-b bg-card/80 backdrop-blur-md shadow-sm">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+          <h1 className="text-xl font-bold">ThyroSight</h1>
+
           <div className="flex items-center gap-4">
-            <div className="hidden sm:flex flex-col items-end">
-              <p className="text-sm font-semibold text-foreground">
-                {doctorName || "Doctor"}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Senior Radiologist
-              </p>
-            </div>
-            <div className="h-8 w-px bg-border/50 hidden sm:block" />
+            {/* Profile Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  {doctorName || "Doctor"}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setIsProfileOpen(true)}>
+                  Edit Profile
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <form action={signout}>
-              <Button
-                
-                size="sm"
-                className="rounded-lg  bg-red-500 hover:bg-red-600 text-white"
-                type="submit"
-              >
+              <Button size="sm" className="bg-red-500 text-white" type="submit">
                 <LogOut className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Sign out</span>
+                Sign out
               </Button>
             </form>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="relative z-10 mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Top Actions Row */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-6">
-          <div className="space-y-1">
-            <h2 className="text-3xl font-bold text-foreground tracking-tight">
-              Dashboard Overview
-            </h2>
-            <p className="text-muted-foreground">
-              Welcome back, <span className="font-semibold text-foreground">{doctorName || "Doctor"}</span>. 
-              {stats.newScansCount > 0 && (
-                <> You have{" "}
-                  <span className="text-primary font-semibold">
-                    {stats.newScansCount} new {stats.newScansCount === 1 ? "analysis" : "analyses"}
-                  </span>{" "}
-                  today.</>
-              )}
-              {stats.newScansCount === 0 && " No new analyses today."}
-            </p>
-          </div>
-          <Button
-            onClick={() => setIsNewScanOpen(true)}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground   transition-all hover:scale-105 active:scale-95 px-6 h-11 rounded-xl font-semibold"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Start New Scan
-          </Button>
-        </div>
+      <main className="max-w-7xl mx-auto px-6 py-8">
 
-        {/* Stats Strip */}
-        <div className="mb-8">
-          <StatsStrip
-            totalPatients={stats.totalPatients}
-            newScansCount={stats.newScansCount}
-          />
-        </div>
-
-       {/* ===================== Recent Scans – Redesigned ===================== */}
-<section className="relative mt-2 ">
-
-{/* Glow background */}
-{/* <div className="absolute inset-0 -z-10 rounded-3xl bg-black" /> */}
-
-<div className="rounded-3xl border border-border/50 bg-card/70  p-6">
-
-  {/* Header */}
-  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-6">
-    <div>
-      <h3 className="text-2xl font-extrabold tracking-tight">
-        Recent Scans
-      </h3>
-      <p className="text-sm text-muted-foreground mt-1">
-        AI-sorted by clinical priority
-      </p>
-    </div>
-
-    {/* Smart Sort Tabs */}
-    <div className="flex items-center bg-secondary p-1 rounded-xl">
-      {(["urgency", "recent", "name"] as const).map((key) => (
-        <button
-          key={key}
-          onClick={() => setSortBy(key)}
-          className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all
-            ${
-              sortBy === key
-                ? "bg-primary text-white "
-                : "text-muted-foreground hover:text-foreground"
-            }
-          `}
-        >
-          {key === "urgency" && "Urgency"}
-          {key === "recent" && "Recent"}
-          {key === "name" && "Name"}
-        </button>
-      ))}
-    </div>
-  </div>
-
-  {/* Divider */}
-  <div className="h-px w-full bg-border/50 mb-4" />
-
-  {/* List */}
-  <div className="max-h-[calc(100vh-420px)] overflow-y-auto pr-2 custom-scrollbar">
-    {loading ? (
-      <div className="space-y-4">
-        {[1, 2, 3].map((i) => (
-          <Skeleton
-            key={i}
-            className="h-28 w-full rounded-2xl bg-muted/40"
-          />
-        ))}
-      </div>
-    ) : sortedPatients.length > 0 ? (
-      <div className="space-y-4">
-        {sortedPatients.map((patient) => (
-          <div
-            key={patient.id}
-            className={`
-              group relative rounded-2xl transition-all
-              ${
-                patient.status === "high-risk"
-                  ? "border border-red-500/40 bg-red-500/5 shadow-red-500/10"
-                  : patient.status === "new"
-                  ? "border border-primary/40 bg-primary/5 shadow-primary/10"
-                  : "border border-border/40 bg-card"
-              }
-              hover:shadow-xl
-            `}
-          >
-            {/* High risk glow */}
-            {patient.status === "high-risk" && (
-              <div className="absolute inset-0 -z-10 rounded-2xl bg-red-500/20 blur-xl animate-pulse" />
-            )}
-
-            <PatientCard patient={patient} />
-          </div>
-        ))}
-      </div>
-    ) : (
-      <EmptyState onAction={() => setIsNewScanOpen(true)} />
-    )}
-  </div>
+<div className="flex justify-end">
+  <Button
+    onClick={() => setIsNewScanOpen(true)}
+    className="bg-green-800 text-white"
+  >
+    <Plus className="h-4 w-4 mr-2" />
+    Start New Scan
+  </Button>
 </div>
-</section>
 
+
+        <div className="mt-6">
+          {/* Filter/Sort Controls */}
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Recent Scans</h2>
+            <div className="flex items-center gap-2  border border-green-900 px-2 py-1 rounded">
+              <span className="hidden sm:inline text-[11px] font-medium  uppercase tracking-wide">
+                Sort by
+              </span>
+              {(["recent", "name"] as const).map((key) => (
+                <button
+                  key={key}
+                  onClick={() => setSortBy(key)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-sm bg-green-900 transition-all border
+                    ${
+                      sortBy === key
+                        ? "bg-primary text-primary-foreground border-primary "
+                        : "bg-transparent text-muted-foreground border-transparent hover:bg-background/40 hover:text-foreground"
+                    }`}
+                >
+                  {key === "recent" && (
+                    <>
+                      <Clock3 className="h-3.5 w-3.5" />
+                      <span>Most recent</span>
+                    </>
+                  )}
+                  {key === "name" && (
+                    <>
+                      <ArrowDownAZ className="h-3.5 w-3.5" />
+                      <span>Name A–Z</span>
+                    </>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {loading ? (
+              <Skeleton className="h-24 w-full" />
+            ) : (() => {
+              const sortedPatients = [...patients].sort((a, b) => {
+                if (sortBy === "recent") {
+                  return new Date(b.lastScan).getTime() - new Date(a.lastScan).getTime();
+                }
+                if (sortBy === "name") {
+                  return a.name.localeCompare(b.name);
+                }
+                return 0;
+              });
+
+              return sortedPatients.length > 0 ? (
+                sortedPatients.map((p) => <PatientCard key={p.id} patient={p} />)
+              ) : (
+                <EmptyState onAction={() => setIsNewScanOpen(true)} />
+              );
+            })()}
+          </div>
+        </div>
       </main>
 
-      {/* New Scan Panel */}
+      {/* Profile Modal */}
+      {isProfileOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-card p-6 rounded-2xl w-full max-w-md shadow-xl">
+            <h2 className="text-lg font-semibold mb-4">Edit Profile</h2>
+
+            <div className="space-y-4">
+              <Input
+                type="number"
+                placeholder="Age"
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+              />
+              <Input
+                placeholder="Department"
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+              />
+              <Input
+                placeholder="Hospital"
+                value={hospital}
+                onChange={(e) => setHospital(e.target.value)}
+              />
+
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsProfileOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={saveProfile} disabled={savingProfile}>
+                  {savingProfile ? "Saving..." : "Save"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <NewScanPanel
         isOpen={isNewScanOpen}
         onClose={() => setIsNewScanOpen(false)}
