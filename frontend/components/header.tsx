@@ -34,16 +34,14 @@ export default function Header({
       } = await supabase.auth.getSession();
 
       const token = session?.access_token;
-      const proxyPrefix = "/api/proxy";
+      const backendUrl =
+        process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
-      const response = await fetch(
-        `${proxyPrefix}/export/pdf/${predictionId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const response = await fetch(`${backendUrl}/export/pdf/${predictionId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
 
       if (!response.ok) {
         throw new Error("Failed to generate report");

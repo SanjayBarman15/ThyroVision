@@ -167,12 +167,13 @@ export default function NewScanPanel({
         throw new Error("Authentication failed. Please log in again.");
 
       const token = session.access_token;
-      const proxyPrefix = "/api/proxy";
+      const backendUrl =
+        process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
       // 1. Create Patient (skip if already created during retry)
       let patientId = createdPatientId;
       if (!patientId) {
-        const patientResponse = await fetch(`${proxyPrefix}/patients/`, {
+        const patientResponse = await fetch(`${backendUrl}/patients/`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -182,7 +183,24 @@ export default function NewScanPanel({
         });
 
         if (!patientResponse.ok) {
-          const err = await patientResponse.json();
+          console.error(
+            "[Patient Creation Error] Status:",
+            patientResponse.status,
+            patientResponse.statusText,
+          );
+          let err;
+          try {
+            err = await patientResponse.json();
+            console.error("[Patient Creation Error] Response:", err);
+          } catch (parseError) {
+            console.error(
+              "[Patient Creation Error] Failed to parse error response:",
+              parseError,
+            );
+            throw new Error(
+              `Failed to create patient record (HTTP ${patientResponse.status})`,
+            );
+          }
           const detail =
             typeof err.detail === "string"
               ? err.detail
@@ -200,7 +218,7 @@ export default function NewScanPanel({
       imageFormData.append("patient_id", patientId as string);
       imageFormData.append("file", imageFile!);
 
-      const imageResponse = await fetch(`${proxyPrefix}/images/upload-raw`, {
+      const imageResponse = await fetch(`${backendUrl}/images/upload-raw`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: imageFormData,
@@ -226,7 +244,7 @@ export default function NewScanPanel({
       toast.info("Starting AI Analysis...", {
         icon: <Loader2 className="h-4 w-4 animate-spin" />,
       });
-      const inferenceResponse = await fetch(`${proxyPrefix}/inference/run`, {
+      const inferenceResponse = await fetch(`${backendUrl}/inference/run`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -258,7 +276,7 @@ export default function NewScanPanel({
       );
 
       const explainResponse = await fetch(
-        `${proxyPrefix}/inference/${predictionId}/explain`,
+        `${backendUrl}/inference/${predictionId}/explain`,
         {
           method: "POST",
           headers: {
