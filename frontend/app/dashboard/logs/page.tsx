@@ -41,8 +41,9 @@ export default function SystemLogsPage() {
   useEffect(() => {
     async function init() {
       try {
-        const proxyPrefix = "/api/proxy";
-        const configRes = await fetch(`${proxyPrefix}/api/logs/config`);
+        const backendUrl =
+          process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+        const configRes = await fetch(`${backendUrl}/api/logs/config`);
         const configData = await configRes.json();
         setIsLoggingEnabled(configData.logging_enabled);
         setIsConfigLoading(false);
@@ -77,9 +78,10 @@ export default function SystemLogsPage() {
         queryParams.append("action", currentFilters.action);
       // Backend search is not yet implemented for all fields, we'll keep frontend filtering for now if needed or implement backend search later
 
-      const proxyPrefix = "/api/proxy";
+      const backendUrl =
+        process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
       const response = await fetch(
-        `${proxyPrefix}/api/logs?${queryParams.toString()}`,
+        `${backendUrl}/api/logs?${queryParams.toString()}`,
       );
       const data = await response.json();
 

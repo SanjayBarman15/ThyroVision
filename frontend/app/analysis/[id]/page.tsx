@@ -135,10 +135,11 @@ export default function AnalysisPage({
               data: { session },
             } = await supabase.auth.getSession();
             const token = session?.access_token;
-            const proxyPrefix = "/api/proxy";
+            const backendUrl =
+              process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
             const feedbackRes = await fetch(
-              `${proxyPrefix}/predictions/${predData.id}/feedback`,
+              `${backendUrl}/predictions/${predData.id}/feedback`,
               {
                 headers: { Authorization: `Bearer ${token}` },
               },
