@@ -83,7 +83,7 @@ class FasterRCNNDetector:
         """
         h_orig, w_orig = image_array.shape[:2]
         
-        # 1. Preprocess (CLAHE + Normalize)
+        # 1. Preprocess (Normalize to [0, 1] RGB)
         # Returns Tensor (3, H, W)
         tensor = detection_preprocess_from_array(image_array).to(self.device).unsqueeze(0)
 
@@ -110,21 +110,26 @@ class FasterRCNNDetector:
         print(f"🎯 Selected Max Score: {max_score:.4f}")
 
         # Threshold check
-        # ⚠️ DIAGNOSTIC: Lowered threshold from 0.5 to 0.1 to see if model is detecting anything at all
-        CONF_THRESHOLD = 0.1 
+        # CONF_THRESHOLD = 0.3 (Standard production threshold)
+        CONF_THRESHOLD = 0.3 
         if max_score < CONF_THRESHOLD:
             print(f"⚠️ Confidence too low ({max_score:.4f} < {CONF_THRESHOLD}). Using fallback.")
             return self._format_fallback(w_orig, h_orig, max_score)
 
+        # 4. Use raw box coordinates (Faster R-CNN usually outputs pixel coords)
         bbox = boxes[max_idx].cpu().numpy()
-        xmin, ymin, xmax, ymax = bbox
+        
+        xmin = float(bbox[0])
+        ymin = float(bbox[1])
+        xmax = float(bbox[2])
+        ymax = float(bbox[3])
 
         return {
             "bounding_box": {
-                "xmin": float(xmin),
-                "ymin": float(ymin),
-                "xmax": float(xmax),
-                "ymax": float(ymax),
+                "xmin": xmin,
+                "ymin": ymin,
+                "xmax": xmax,
+                "ymax": ymax,
             },
             "score": float(max_score),
             "image_width": w_orig,

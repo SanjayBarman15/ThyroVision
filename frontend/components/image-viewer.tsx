@@ -41,7 +41,12 @@ export default function ImageViewer({
   onZoomScale,
 }: ImageViewerProps) {
   const [isLoading, setIsLoading] = useState(true);
+  const [naturalSize, setNaturalSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
 
   // Transform State
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -189,66 +194,87 @@ export default function ImageViewer({
               : "transform 0.15s cubic-bezier(0.2, 0, 0, 1)",
           }}
         >
-          {/* Image Container - plain black background */}
-          <div className="w-full h-full relative overflow-hidden border-2 border-white">
-            {/* Centered Content Icon or Real Image */}
-            <div className="absolute inset-0">
-              <div className="absolute inset-0 z-10 text-center flex items-center justify-center">
-                {imageUrl ? (
-                  <img
-                    key={imageUrl}
-                    src={imageUrl}
-                    alt="Ultrasound Scan"
-                    className={`w-full h-full object-cover block ${
-                      imageMode === "processed"
-                        ? "brightness-110 contrast-125"
-                        : ""
-                    }`}
-                    onLoad={() => {
-                      console.log("📸 Image Loaded Successfully:", imageUrl);
-                      setIsLoading(false);
-                    }}
-                    onError={() => {
-                      console.error("❌ Image Load Error:", imageUrl);
-                      setIsLoading(false);
-                    }}
-                  />
-                ) : (
+          <div className="absolute inset-0 flex items-center justify-center p-4">
+            <div
+              className="relative border-2 border-white shadow-2xl bg-zinc-900 overflow-hidden"
+              style={{
+                aspectRatio:
+                  boundingBox?.image_width && boundingBox?.image_height
+                    ? `${boundingBox.image_width} / ${boundingBox.image_height}`
+                    : "auto",
+                maxWidth: "100%",
+                maxHeight: "100%",
+                width: zoomLevel > 1 ? "100%" : "auto", // Allow image to define size unless zoomed
+                height: zoomLevel > 1 ? "100%" : "auto",
+              }}
+            >
+              {imageUrl ? (
+                <img
+                  key={imageUrl}
+                  ref={imageRef}
+                  src={imageUrl}
+                  alt="Ultrasound Scan"
+                  className={`max-w-full max-h-full block ${
+                    imageMode === "processed"
+                      ? "brightness-110 contrast-125"
+                      : ""
+                  }`}
+                  onLoad={(e) => {
+                    const img = e.currentTarget;
+                    console.log("📸 Image Loaded Successfully:", {
+                      url: imageUrl,
+                      naturalWidth: img.naturalWidth,
+                      naturalHeight: img.naturalHeight,
+                    });
+                    setNaturalSize({
+                      width: img.naturalWidth,
+                      height: img.naturalHeight,
+                    });
+                    setIsLoading(false);
+                  }}
+                  onError={() => {
+                    console.error("❌ Image Load Error:", imageUrl);
+                    setIsLoading(false);
+                  }}
+                />
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <div className="text-[120px] mb-4 blur-[1px] opacity-50 grayscale">
                     {imageMode === "original" ? "📷" : "🔮"}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
 
-              {/* Mode Indicator Overlay - Part of image now */}
-              <div className="absolute bottom-12 left-0 right-0 text-center pointer-events-none">
-                <p className="text-slate-500/50 font-mono text-[10px] uppercase tracking-[0.5em]">
+              {/* Mode Indicator Overlay */}
+              <div className="absolute bottom-4 left-0 right-0 text-center pointer-events-none z-30">
+                <p className="text-slate-500/50 font-mono text-[8px] uppercase tracking-[0.4em] drop-shadow-md">
                   {imageMode === "original"
                     ? "B-Mode / Raw"
                     : "AI Segmentation Overlay"}
                 </p>
               </div>
-            </div>
 
-            {/* AI Overlays - Bounding Box Overlay */}
-            {imageMode === "processed" && boundingBox && (
-              <div className="absolute inset-0 pointer-events-none z-20">
-                <div
-                  className={`absolute border-2 ${imageViewerColors.boundingBox.border} ${imageViewerColors.boundingBox.bg} ${imageViewerColors.boundingBox.shadow} backdrop-blur-[0.5px]`}
-                  style={{
-                    left: `${(boundingBox.x / boundingBox.image_width) * 100}%`,
-                    top: `${(boundingBox.y / boundingBox.image_height) * 100}%`,
-                    width: `${(boundingBox.width / boundingBox.image_width) * 100}%`,
-                    height: `${(boundingBox.height / boundingBox.image_height) * 100}%`,
-                  }}
-                >
-                  <div className={`absolute -top-6 left-0 ${imageViewerColors.boundingBox.labelBg} ${imageViewerColors.boundingBox.labelText} text-[10px] font-bold px-2 py-0.5 border ${imageViewerColors.boundingBox.labelBorder} rounded-sm whitespace-nowrap`}>
-                    TI-RADS DETECTED
+              {/* AI Overlays - Bounding Box Overlay */}
+              {imageMode === "processed" && boundingBox && (
+                <div className="absolute inset-0 pointer-events-none z-20">
+                  <div
+                    className={`absolute border-2 ${imageViewerColors.boundingBox.border} ${imageViewerColors.boundingBox.bg} ${imageViewerColors.boundingBox.shadow} backdrop-blur-[0.5px] transition-all`}
+                    style={{
+                      left: `${(boundingBox.x / (naturalSize?.width || boundingBox.image_width || 1)) * 100}%`,
+                      top: `${(boundingBox.y / (naturalSize?.height || boundingBox.image_height || 1)) * 100}%`,
+                      width: `${(boundingBox.width / (naturalSize?.width || boundingBox.image_width || 1)) * 100}%`,
+                      height: `${(boundingBox.height / (naturalSize?.height || boundingBox.image_height || 1)) * 100}%`,
+                    }}
+                  >
+                    <div
+                      className={`absolute -top-6 left-0 ${imageViewerColors.boundingBox.labelBg} ${imageViewerColors.boundingBox.labelText} text-[10px] font-bold px-2 py-0.5 border ${imageViewerColors.boundingBox.labelBorder} rounded-sm whitespace-nowrap shadow-sm`}
+                    >
+                      TI-RADS DETECTED
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-
+              )}
+            </div>
           </div>
         </div>
 
