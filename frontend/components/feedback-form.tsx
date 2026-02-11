@@ -79,8 +79,7 @@ export default function FeedbackForm({
       } = await supabase.auth.getSession();
       const token = session?.access_token;
 
-      const backendUrl =
-        process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+      const backendUrl = "/api/proxy";
 
       const response = await fetch(
         `${backendUrl}/predictions/${predictionId}/feedback`,

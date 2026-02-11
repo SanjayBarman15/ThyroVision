@@ -38,6 +38,7 @@ async def run_inference(
     image_id: uuid.UUID = Body(..., embed=True),
     user=Depends(verify_user)
 ):
+    print(f"[Inference Debug] Starting inference for image_id={image_id}")
     """
     Run ML inference pipeline on an uploaded raw image.
 
@@ -74,6 +75,9 @@ async def run_inference(
     try:
         inference = await pipeline.run(raw_bytes)
     except Exception as e:
+        print(f"[Inference Error] Pipeline failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=500,
             detail=f"Inference pipeline failed: {str(e)}"

@@ -80,6 +80,9 @@ async def create_patient(
         "past_medical_data": patient.past_medical_data
     }).execute()
 
+    if not res.data:
+        raise HTTPException(status_code=500, detail="Failed to create patient record")
+
     new_patient = res.data[0]
 
     # 3️⃣ Log event

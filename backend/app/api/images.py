@@ -91,6 +91,7 @@ async def upload_raw_image(
     user=Depends(verify_user)
 ):
     doctor_id = user.id
+    print(f"[Upload Debug] Starting upload - patient_id={patient_id}, user_id={doctor_id}, filename={file.filename}")
 
     # Validate image
     if not file.content_type or not file.content_type.startswith("image/"):
@@ -102,9 +103,13 @@ async def upload_raw_image(
     # file_path = f"raw/{doctor_id}/{patient_id}/{image_id}.{ext}"
     #raw images path with out raw prefix
     file_path = f"raw/doctor_{doctor_id}/patient_{patient_id}/image_{image_id}.{ext}"
-    file_bytes = await file.read()
-
+    
     try:
+        print(f"[Upload Debug] Reading file bytes...")
+        file_bytes = await file.read()
+        print(f"[Upload Debug] File size: {len(file_bytes)} bytes")
+        
+        print(f"[Upload Debug] Uploading to storage - path={file_path}")
         supabase_admin.storage.from_(STORAGE_BUCKET).upload(
             file_path,
             file_bytes,
@@ -118,6 +123,9 @@ async def upload_raw_image(
             signed_url = signed_url.get("signedURL") or signed_url.get("signed_url")
 
     except Exception as e:
+        print(f"[Upload Error] Exception occurred: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
         error_msg = str(e)
         log_event(
             level="ERROR",
@@ -131,13 +139,16 @@ async def upload_raw_image(
         )
         raise HTTPException(status_code=500, detail=f"Storage failed: {error_msg}")
 
-    supabase_admin.table("raw_images").insert({
+    res = supabase_admin.table("raw_images").insert({
         "id": image_id,
         "doctor_id": doctor_id,
         "patient_id": patient_id,
         "file_path": file_path,
         "file_url": signed_url
     }).execute()
+
+    if not res.data:
+        raise HTTPException(status_code=500, detail="Failed to record image in database")
 
     # 4️⃣ Log success
     log_event(

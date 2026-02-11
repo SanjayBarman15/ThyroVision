@@ -167,8 +167,7 @@ export default function NewScanPanel({
         throw new Error("Authentication failed. Please log in again.");
 
       const token = session.access_token;
-      const backendUrl =
-        process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+      const backendUrl = "/api/proxy";
 
       // 1. Create Patient (skip if already created during retry)
       let patientId = createdPatientId;
