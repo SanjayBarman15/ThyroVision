@@ -15,6 +15,16 @@ interface ExplanationAccordionProps {
   };
 }
 
+// Helper to format labels (snake_case or camelCase to Space Case)
+const formatLabel = (str: string) => {
+  if (!str) return "";
+  return str
+    .replace(/_/g, " ")
+    .replace(/([A-Z])/g, " $1")
+    .trim()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+};
+
 export default function ExplanationAccordion({
   analysis,
 }: ExplanationAccordionProps) {
@@ -71,15 +81,15 @@ export default function ExplanationAccordion({
                   <div className="flex items-start">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary/40 mt-1.5 mr-2.5 group-hover:bg-primary transition-colors" />
                     <div className="flex-1 flex justify-between border-b border-dashed border-border/40 pb-1">
-                      <span className="text-muted-foreground capitalize font-medium text-xs">
-                        {item.key.replace(/([A-Z])/g, " $1")}
+                      <span className="text-muted-foreground font-medium text-xs">
+                        {formatLabel(item.key)}
                       </span>
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-foreground text-xs">
-                          {item.value}
+                        <span className="font-semibold text-foreground text-xs">
+                          {formatLabel(item.value)}
                         </span>
                         {item.points !== null && (
-                          <span className="text-[10px] bg-secondary/50 px-1.5 rounded text-muted-foreground">
+                          <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full border border-primary/20 font-bold whitespace-nowrap min-w-[35px] text-center">
                             +{item.points} pts
                           </span>
                         )}
@@ -87,7 +97,7 @@ export default function ExplanationAccordion({
                     </div>
                   </div>
                   {item.description && (
-                    <p className="text-[10px] text-muted-foreground/70 ml-4 mt-0.5 italic">
+                    <p className="text-[10px] text-muted-foreground/70 ml-4 mt-0.5 italic leading-snug">
                       {item.description}
                     </p>
                   )}
@@ -108,10 +118,10 @@ export default function ExplanationAccordion({
                       key={key}
                       className="flex items-center justify-between text-xs"
                     >
-                      <span className="text-muted-foreground capitalize">
-                        {key.replace(/_/g, " ")}
+                      <span className="text-muted-foreground font-medium">
+                        {formatLabel(key)}
                       </span>
-                      <span className="font-mono text-foreground font-medium">
+                      <span className="font-mono text-foreground font-semibold">
                         {typeof value === "number"
                           ? key.includes("area")
                             ? `${(value * 100).toFixed(2)}%`

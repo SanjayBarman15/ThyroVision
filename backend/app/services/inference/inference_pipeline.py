@@ -50,7 +50,7 @@ class InferencePipeline:
 
         # 2️⃣ ROI Detection (Real Faster R-CNN)
         # ─────────────────────────────────────────────
-        # Convert PIL to Numpy for detector (which handles CLAHE internally)
+        # Convert PIL to Numpy for detector (detects on raw RGB pixels)
         image_array = np.array(img)
         
         roi_result = self.roi_detector.detect(image_array)

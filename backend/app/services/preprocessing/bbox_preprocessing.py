@@ -1,77 +1,71 @@
 import cv2
 import numpy as np
 import torch
-from typing import Union, List
-
-def apply_clahe(img: np.ndarray) -> np.ndarray:
-    """
-    Applies CLAHE (Contrast Limited Adaptive Histogram Equalization) to a grayscale image.
-    """
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    return clahe.apply(img)
+from typing import List
 
 def detection_preprocess(image_path: str) -> torch.Tensor:
     """
-    🌟 GOLDEN DETECTION PREPROCESSING FUNCTION 🌟
-    
-    Standardizes ultrasound images for the Faster R-CNN model.
-    Steps: Grayscale -> CLAHE -> 3-Channel BGR -> Normalize [0,1] -> Tensor (C,H,W)
-    
+    EXACT MATCH TO TRAINING PREPROCESSING
+
+    This function mirrors the notebook pipeline:
+    - cv2.imread (BGR)
+    - BGR → RGB
+    - Convert to tensor
+    - Scale to [0,1]
+
     Args:
-        image_path: Path to the raw ultrasound image.
-        
+        image_path: Path to ultrasound image
+
     Returns:
-        torch.Tensor: Normalized tensor of shape (3, H, W) in range [0, 1].
+        torch.Tensor: (3, H, W) normalized tensor
     """
-    # 1. Load image (Grayscale as per ML team's golden logic)
-    img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    # 1. Read image exactly like training
+    img = cv2.imread(image_path)
     if img is None:
         raise FileNotFoundError(f"Image not found or invalid: {image_path}")
 
-    return _process_common(img)
+    # 2. Convert BGR → RGB (same as notebook)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-def detection_preprocess_from_array(image_array: np.ndarray) -> torch.Tensor:
-    """
-    Preprocess from numpy array (useful for web requests/real-time).
-    
-    Args:
-        image_array: H×W×3 or H×W numpy array.
-        
-    Returns:
-        torch.Tensor: Normalized tensor of shape (3, H, W).
-    """
-    if len(image_array.shape) == 3:
-        # Convert to grayscale if it's a color image
-        img = cv2.cvtColor(image_array, cv2.COLOR_RGB2GRAY)
-    else:
-        img = image_array
-
-    return _process_common(img)
-
-def _process_common(img: np.ndarray) -> torch.Tensor:
-    """Shared logic for CLAHE, normalization, and tensor conversion."""
-    # 2. CLAHE contrast enhancement
-    img = apply_clahe(img)
-
-    # 3. Convert back to 3-channel (Detection model expects 3 channels)
-    # Note: ML team used BGR conversion in their script
-    img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-
-    # 4. Scale to [0, 1]
+    # 3. Convert to float and scale to [0,1]
     img = img.astype(np.float32) / 255.0
 
-    # 5. Convert to PyTorch tensor (C, H, W)
+    # 4. Convert to PyTorch tensor (C, H, W)
     tensor = torch.from_numpy(img).permute(2, 0, 1)
 
     return tensor
 
+
+def detection_preprocess_from_array(image_array: np.ndarray) -> torch.Tensor:
+    """
+    Same logic but for numpy array input (web uploads / API)
+
+    Args:
+        image_array: H×W×3 numpy array
+
+    Returns:
+        torch.Tensor: (3, H, W)
+    """
+    # Ensure RGB format (if coming from frontend)
+    if len(image_array.shape) == 3:
+        img = image_array
+    else:
+        raise ValueError("Input image must have 3 channels (H×W×3)")
+
+    img = img.astype(np.float32) / 255.0
+    tensor = torch.from_numpy(img).permute(2, 0, 1)
+
+    return tensor
+
+
 def batch_preprocess_detection(image_paths: List[str]) -> List[torch.Tensor]:
-    """Preprocess a list of images for detection."""
+    """Preprocess multiple images exactly like training."""
     return [detection_preprocess(p) for p in image_paths]
 
 
 if __name__ == "__main__":
-    # Quick sanity check logic
-    print("Detection Preprocessing Service Loaded.")
-    print("- Logic: CLAHE + Normalization [0,1]")
-    print("- Target: Faster R-CNN + ResNet101")
+    print("Detection Preprocessing Loaded (TRAINING MATCH MODE)")
+    print("- No CLAHE")
+    print("- No Grayscale")
+    print("- RGB format only")
+    print("- Normalization: [0,1]")
