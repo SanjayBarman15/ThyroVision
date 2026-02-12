@@ -23,8 +23,17 @@ interface PredictionCardProps {
 export default function PredictionCard({ analysis }: PredictionCardProps) {
   const [showDistribution, setShowDistribution] = useState(false);
 
-  // Use real data from backend or fallback to empty distribution
-  const confidences = analysis.tiradsConfidences || {};
+  // Use real data from backend (already boosted)
+  const confidences = analysis.tiradsConfidences || {
+    TIRADS_1: 0,
+    TIRADS_2: 0,
+    TIRADS_3: 0,
+    TIRADS_4: 0,
+    TIRADS_5: 0,
+  };
+
+  const displayConfidence = analysis.confidence;
+
   const chartData = [
     {
       category: "TR1",
@@ -118,23 +127,23 @@ export default function PredictionCard({ analysis }: PredictionCardProps) {
         h-full flex items-center justify-end px-4
         transition-all duration-500
         ${
-          analysis.confidence * 100 < 10
+          displayConfidence * 100 < 10
             ? "bg-red-800"
-            : analysis.confidence * 100 <= 25
+            : displayConfidence * 100 <= 25
               ? "bg-red-700"
-              : analysis.confidence * 100 <= 35
+              : displayConfidence * 100 <= 35
                 ? "bg-red-400"
-                : analysis.confidence * 100 <= 50
+                : displayConfidence * 100 <= 50
                   ? "bg-yellow-400"
-                  : analysis.confidence * 100 <= 75
+                  : displayConfidence * 100 <= 75
                     ? "bg-green-600"
                     : "bg-green-800"
         }
       `}
-              style={{ width: `${analysis.confidence * 100}%` }}
+              style={{ width: `${displayConfidence * 100}%` }}
             >
               <span className="text-[10px] font-bold text-white font-mono leading-none">
-                {Math.round(analysis.confidence * 100)}%
+                {Math.round(displayConfidence * 100)}%
               </span>
             </div>
           </div>

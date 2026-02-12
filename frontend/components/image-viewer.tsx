@@ -269,7 +269,7 @@ export default function ImageViewer({
                     <div
                       className={`absolute -top-6 left-0 ${imageViewerColors.boundingBox.labelBg} ${imageViewerColors.boundingBox.labelText} text-[10px] font-bold px-2 py-0.5 border ${imageViewerColors.boundingBox.labelBorder} rounded-sm whitespace-nowrap shadow-sm`}
                     >
-                      TI-RADS DETECTED
+                      NODULE DETECTED
                     </div>
                   </div>
                 </div>

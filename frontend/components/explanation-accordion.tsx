@@ -88,11 +88,6 @@ export default function ExplanationAccordion({
                         <span className="font-semibold text-foreground text-xs">
                           {formatLabel(item.value)}
                         </span>
-                        {item.points !== null && (
-                          <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full border border-primary/20 font-bold whitespace-nowrap min-w-[35px] text-center">
-                            +{item.points} pts
-                          </span>
-                        )}
                       </div>
                     </div>
                   </div>

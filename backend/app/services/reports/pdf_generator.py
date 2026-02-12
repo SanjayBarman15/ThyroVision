@@ -195,8 +195,25 @@ class PDFReportGenerator:
         # --- Section 3: Ultrasound Findings ---
         elements.append(Paragraph("Section 3 – Ultrasound Findings", section_style))
         feature_rows = [["Feature", "Observation"]]
-        for k, v in features.items():
-            feature_rows.append([k.capitalize(), str(v).capitalize()])
+        
+        # Helper to format labels
+        def format_lbl(s):
+            return str(s).replace("_", " ").title()
+
+        # Handle nested Structure if present
+        clinical_features = features.get("clinical_features", {})
+        measurements = features.get("measurements", {})
+
+        if clinical_features:
+            # Add Clinical Features
+            for k, v in clinical_features.items():
+                val = v.get("value") if isinstance(v, dict) else v
+                feature_rows.append([format_lbl(k), format_lbl(val)])
+        else:
+            # Fallback for old flat data
+            for k, v in features.items():
+                if k not in ["clinical_features", "measurements", "total_points"]:
+                    feature_rows.append([format_lbl(k), format_lbl(v)])
         
         f_table = Table(feature_rows, colWidths=[2.5 * inch, 3.5 * inch])
         f_table.setStyle(TableStyle([
