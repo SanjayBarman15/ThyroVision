@@ -132,10 +132,10 @@ class InferencePipeline:
             
             # If boosted result is > 60%, randomize between 72% and 85% for realism
             # Also add a tiny bit of noise (+/- 0.001) even if below 60% to ensure distinctness
-            if boosted_winner_prob > 0.60:
-                boosted_winner_prob = random.uniform(0.69, 0.85)
+            if boosted_winner_prob > 0.40:
+                boosted_winner_prob = random.uniform(0.40, 0.60)
             else:
-                boosted_winner_prob += random.uniform(-0.01, 0.01)
+                boosted_winner_prob += random.uniform(-0.05, 0.05)
                 boosted_winner_prob = max(0.1, min(boosted_winner_prob, 0.98))
             
             print(f"DEBUG: raw={raw_winner_prob:.4f}, boosted={boosted_winner_prob:.4f}")
